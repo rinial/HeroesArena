@@ -3,8 +3,13 @@
 namespace HeroesArena
 {
     // Interacts with other scripts and represents the logic behind gameplay.
-    public class GameLogic
+    public class GameModel
     {
+        public const string DidBeginGameNotification = "GameModel.DidBeginGameNotification";
+        public const string DidMakeMoveNotification = "GameModel.DidMakeMoveNotification";
+        public const string DidChangeControlNotification = "GameModel.DidChangeControlNotification";
+        public const string DidEndGameNotification = "GameModel.DidEndGameNotification";
+
         private Dictionary<PlayerID, Player> _players;
         private Queue<PlayerID> _turnOrder;
         public Map Map { get; private set; }
@@ -12,42 +17,53 @@ namespace HeroesArena
         // TODO change to make TDM instead of FFA.
         public PlayerID Winner { get; private set; }
 
-        // TODO delete later, this is just for tests,
-        // moves unit of the controlling player one cell up.
-        public void MoveUp()
-        {
-            Cell currentCell = _players[Control].ControlledUnit.Cell;
-            Cell newCell = Map.Cells[new Coordinates(currentCell.Position.X, currentCell.Position.Y + 1)];
-            Move(newCell);
-        }
-
         // TODO this may need rework,
         // moves unit of the controlling player to another cell.
         public void Move(Cell cell)
         {
+            if (cell == null)
+                return;
+
             _players[Control].ControlledUnit.Move(cell);
+            
+            this.PostNotification(DidMakeMoveNotification, cell.Position);
+        }
+        public void Move(Coordinates pos)
+        {
+            if(Map.Cells.ContainsKey(pos))
+                Move(Map.Cells[pos]);
         }
 
-        private void ChangeTurn()
+        // Changes turn.
+        public void ChangeTurn()
         {
             _turnOrder.Enqueue(_turnOrder.Dequeue());
             Control = _turnOrder.Peek();
+
+            this.PostNotification(DidChangeControlNotification);
 
             // TODO
         }
 
         // TODO may need total rework later,
         // create map, allocate units to players.
-        public GameLogic()
+        public GameModel()
         {
             _players = new Dictionary<PlayerID, Player>();
             _turnOrder = new Queue<PlayerID>();
-            Winner = null;
-
             CreatePlayers();
+        }
+
+        // TODO rework this.
+        public void Reset()
+        {
+            Winner = null;
             SetTurnOrder();
             CreateMap();
+            CreateObjects();
             CreateAndAssignUnits();
+
+            this.PostNotification(DidBeginGameNotification);
         }
 
         // TODO rework this.
@@ -71,13 +87,13 @@ namespace HeroesArena
             Control = _turnOrder.Peek();
         }
 
-        // TODO rework this.
+        // TODO rework this too.
         public void CreateMap()
         {
             List<Cell> cells = new List<Cell>();
-            for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < 5; ++i)
             {
-                for (int j = 0; j < 10; ++i)
+                for (int j = 0; j < 5; ++j)
                 {
                     Cell c = new Cell(new Coordinates(i, j), new BasicTile());
                     cells.Add(c);
@@ -86,14 +102,10 @@ namespace HeroesArena
             Map = new Map(cells);
         }
 
-        // TODO rework this too.
-        public void CreateAndAssignUnits()
+        // TODO rework this as well
+        public void CreateObjects()
         {
-            BasicUnit u1 = new BasicUnit(Map.Cells[new Coordinates(2, 2)]);
-            BasicUnit u2 = new BasicUnit(Map.Cells[new Coordinates(7, 7)]);
-
-            _players[new PlayerID(1)].AssignUnit(u1);
-            _players[new PlayerID(2)].AssignUnit(u2);
+            BasicObject o = new BasicObject(Map.Cells[new Coordinates(2,3)]);
         }
 
         // TODO 
@@ -101,16 +113,17 @@ namespace HeroesArena
         // and this is crazy
         // but here's my number
         // rework this maybe.
-        public void Reset()
+        public void CreateAndAssignUnits()
         {
-            SetTurnOrder();
-            CreateMap();
-            CreateAndAssignUnits();
-        }
+            BasicUnit u1 = new BasicUnit(Map.Cells[new Coordinates(1, 1)]);
+            BasicUnit u2 = new BasicUnit(Map.Cells[new Coordinates(3, 3)]);
 
+            _players[new PlayerID(1)].AssignUnit(u1);
+            _players[new PlayerID(2)].AssignUnit(u2);
+        }
+        
         // TODO
         // Player actions
-        //     list of actions
         // CheckForGameOver()
         //     CheckForWin()
         //     CheckForStalemate() if we ever need it

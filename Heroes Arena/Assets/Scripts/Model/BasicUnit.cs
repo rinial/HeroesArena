@@ -20,6 +20,7 @@
 	    public BasicUnit( Cell cell = null )
 	    {
 	        Cell = cell;
+	        cell.Unit = this;
 	    }
 
 	    // TODO

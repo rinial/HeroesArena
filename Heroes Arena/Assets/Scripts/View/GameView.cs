@@ -1,19 +1,25 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.EventSystems;
 
 namespace HeroesArena
 {
     // Represents view of the map.
-    public class MapView : MonoBehaviour
+    public class GameView : MonoBehaviour, IPointerClickHandler
     {
+        public const string CellClickedNotification = "GameView.CellClickedNotification";
+        public const string EndTurnClickedNotification = "GameView.EndTurnClickedNotification";
+
         public const int CELL_X_PIXEL_SIZE = 20;
         public const int CELL_Y_PIXEL_SIZE = 15;
 
         // These are just links to prefabs,
         // TODO move somewhere else
-        [SerializeField] private GameObject Ground;
-        [SerializeField] private GameObject Rogue;
-        [SerializeField] private GameObject HealthPotion;
+        [SerializeField]
+        private GameObject Ground;
+        [SerializeField]
+        private GameObject Rogue;
+        [SerializeField]
+        private GameObject HealthPotion;
 
         // Shows one cell.
         public void Show(Cell cell)
@@ -22,7 +28,7 @@ namespace HeroesArena
             GameObject tile = Instantiate(Ground, transform.FindChild("Tiles"));
             SetGridPosition(tile, cell.Position);
             SetSortingOrder(tile, -cell.Position.Y);
-
+            
             // TODO unit should depend on cell.Unit
             if (cell.Unit != null)
             {
@@ -45,18 +51,38 @@ namespace HeroesArena
         {
             Clear();
             foreach (Cell cell in map.Cells.Values)
+            {
                 Show(cell);
+            }
         }
 
         // Clears the map.
         public void Clear()
         {
+            Debug.Log("Clear");
             for (int i = 0; i < 3; ++i)
             {
                 Transform temp = transform.GetChild(i);
-                while (temp.childCount > 0)
-                    Destroy(temp.GetChild(0));
+                int count = temp.childCount;
+                for (int j = count - 1; j >= 0; --j)
+                    Destroy(temp.GetChild(j).gameObject);
             }
+        }
+
+        // Handles click on map event.
+        void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
+        {
+            Debug.Log("Click Map");
+            Vector2 clickPos = eventData.pointerCurrentRaycast.worldPosition;
+            int x = Mathf.RoundToInt(clickPos.x / CELL_X_PIXEL_SIZE);
+            int y = Mathf.RoundToInt((clickPos.y - CELL_Y_PIXEL_SIZE / 2f) / CELL_Y_PIXEL_SIZE);
+            this.PostNotification(CellClickedNotification, new Coordinates(x, y));
+        }
+
+        public void OnEndTurnClick()
+        {
+            Debug.Log("Click EndTurn");
+            this.PostNotification(EndTurnClickedNotification);
         }
 
         // Sets position on grid for object.

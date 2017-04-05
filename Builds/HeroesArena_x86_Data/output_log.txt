@@ -1,0 +1,35 @@
+Initialize engine version: 5.5.2f1 (3829d7f588f3)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: NVIDIA GeForce GT 750M (ID=0xfe4)
+    Vendor:   NVIDIA
+    VRAM:     3072 MB
+    Driver:   20.19.15.4549
+Begin MonoManager ReloadAssembly
+Platform assembly: Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+Platform assembly: Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\UnityEngine.PlaymodeTestsRunner.dll (this message is harmless)
+Loading Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\UnityEngine.PlaymodeTestsRunner.dll into Unity Child Domain
+- Completed reload, in  0.057 seconds
+Platform assembly: Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: Q:\Studies\Programming\Unity\heroes-arena\Builds\HeroesArena_x86_Data\Managed\System.dll (this message is harmless)
+desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 1.826507 ms
+Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:50903}
+ServerDisconnected due to error: Timeout
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/DebugBindings.gen.cpp Line: 51)
+
+Setting up 2 worker threads for Enlighten.
+  Thread -> id: 3ee0 -> priority: 1 
+  Thread -> id: 2604 -> priority: 1 

@@ -20,6 +20,15 @@ namespace HeroesArena
                 Cells[cell.Position] = cell;
             }
         }
+        // For cloning.
+        public Map(Map map)
+        {
+            Cells = new Dictionary<Coordinates, Cell>();
+            foreach (Cell cell in map.Cells.Values)
+            {
+                Cells[cell.Position] = new Cell(cell);
+            }
+        }
 
         // TODO
     }

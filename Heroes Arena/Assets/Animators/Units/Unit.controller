@@ -8,18 +8,18 @@ AnimatorController:
   m_Name: Unit
   serializedVersion: 5
   m_AnimatorParameters:
-  - m_Name: xMovement
+  - m_Name: xFacing
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
-  - m_Name: yMovement
+    m_Controller: {fileID: 0}
+  - m_Name: yFacing
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
+    m_Controller: {fileID: 0}
   m_AnimatorLayers:
   - serializedVersion: 5
     m_Name: Base Layer
@@ -72,8 +72,8 @@ BlendTree:
     m_CycleOffset: 0
     m_DirectBlendParameter: xMovement
     m_Mirror: 0
-  m_BlendParameter: xMovement
-  m_BlendParameterY: yMovement
+  m_BlendParameter: xFacing
+  m_BlendParameterY: yFacing
   m_MinThreshold: 0
   m_MaxThreshold: 1
   m_UseAutomaticThresholds: 1

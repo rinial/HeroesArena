@@ -6,6 +6,11 @@ TagManager:
   tags:
   - UI
   - Map
+  - Unit
+  - Tile
+  - Object
+  - NetworkManager
+  - MatchController
   layers:
   - Default
   - TransparentFX
@@ -42,6 +47,18 @@ TagManager:
   m_SortingLayers:
   - name: Ground
     uniqueID: 339548011
+    locked: 0
+  - name: Highlight
+    uniqueID: 14072661
+    locked: 0
+  - name: Grid
+    uniqueID: 1786765607
+    locked: 0
+  - name: Objects
+    uniqueID: 415579115
+    locked: 0
+  - name: Units
+    uniqueID: 3102999561
     locked: 0
   - name: Default
     uniqueID: 0

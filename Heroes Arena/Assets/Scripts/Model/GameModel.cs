@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.Networking;
 
 namespace HeroesArena
 {
@@ -10,12 +12,12 @@ namespace HeroesArena
         public const string DidChangeControlNotification = "GameModel.DidChangeControlNotification";
         public const string DidEndGameNotification = "GameModel.DidEndGameNotification";
 
-        private Dictionary<PlayerID, Player> _players;
-        private Queue<PlayerID> _turnOrder;
+        private Dictionary<NetworkInstanceId, PlayerController> _players;
+        private Queue<NetworkInstanceId> _turnOrder;
         public Map Map { get; private set; }
-        public PlayerID Control { get; private set; }
+        public NetworkInstanceId Control { get; private set; }
         // TODO change to make TDM instead of FFA.
-        public PlayerID Winner { get; private set; }
+        public NetworkInstanceId Winner { get; private set; }
 
         // TODO this may need rework,
         // moves unit of the controlling player to another cell.
@@ -26,7 +28,7 @@ namespace HeroesArena
 
             _players[Control].ControlledUnit.Move(cell);
             
-            this.PostNotification(DidMakeMoveNotification, cell.Position);
+            this.PostNotification(DidMakeMoveNotification);
         }
         public void Move(Coordinates pos)
         {
@@ -49,15 +51,15 @@ namespace HeroesArena
         // create map, allocate units to players.
         public GameModel()
         {
-            _players = new Dictionary<PlayerID, Player>();
-            _turnOrder = new Queue<PlayerID>();
-            CreatePlayers();
+            _players = new Dictionary<NetworkInstanceId, PlayerController>();
+            _turnOrder = new Queue<NetworkInstanceId>();
         }
 
         // TODO rework this.
-        public void Reset()
+        public void Reset(List<PlayerController> players)
         {
-            Winner = null;
+            Winner = NetworkInstanceId.Invalid;
+            SetPlayers(players);
             SetTurnOrder();
             CreateMap();
             CreateObjects();
@@ -66,21 +68,18 @@ namespace HeroesArena
             this.PostNotification(DidBeginGameNotification);
         }
 
-        // TODO rework this.
-        private void CreatePlayers()
+        private void SetPlayers(List<PlayerController> players)
         {
             _players.Clear();
-            Player p1 = new Player(new PlayerID(1), new PlayerName("Ingvar"));
-            Player p2 = new Player(new PlayerID(2), new PlayerName("Hrothgar"));
-            _players[p1.ID] = p1;
-            _players[p2.ID] = p2;
+            foreach (PlayerController player in players)
+                _players[player.netId] = player;
         }
 
         // TODO rework this.
         private void SetTurnOrder()
         {
             _turnOrder.Clear();
-            foreach (PlayerID id in _players.Keys)
+            foreach (NetworkInstanceId id in _players.Keys)
             {
                 _turnOrder.Enqueue(id);
             }
@@ -105,7 +104,7 @@ namespace HeroesArena
         // TODO rework this as well
         public void CreateObjects()
         {
-            BasicObject o = new BasicObject(Map.Cells[new Coordinates(2,3)]);
+            new BasicObject(Map.Cells[new Coordinates(2,3)]);
         }
 
         // TODO 
@@ -117,11 +116,27 @@ namespace HeroesArena
         {
             BasicUnit u1 = new BasicUnit(Map.Cells[new Coordinates(1, 1)]);
             BasicUnit u2 = new BasicUnit(Map.Cells[new Coordinates(3, 3)]);
+            List<BasicUnit> units = new List<BasicUnit>();
+            units.Add(u1);
+            units.Add(u2);
 
-            _players[new PlayerID(1)].AssignUnit(u1);
-            _players[new PlayerID(2)].AssignUnit(u2);
+            // TODO names are not supposed to be here
+            string[] names = {"Ingvar", "Hrothgar"};
+
+            List<NetworkInstanceId> players = _players.Keys.ToList();
+            for (int i = 0; i < players.Count; ++i)
+            {
+                _players[players[i]].AssignUnit(units[i]);
+                _players[players[i]].Name = names[i];
+            }
         }
-        
+
+        public bool GameIsEnded()
+        {
+            // TODO
+            return false;
+        }
+
         // TODO
         // Player actions
         // CheckForGameOver()

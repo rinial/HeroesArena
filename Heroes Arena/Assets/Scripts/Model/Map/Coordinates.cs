@@ -5,12 +5,20 @@ namespace HeroesArena
     {
         public readonly int X, Y;
 
+        // UNetWeaver needs it for some reason.
+        public Coordinates()
+        {
+            X = 0;
+            Y = 0;
+        }
+
         public Coordinates(int x = 0, int y = 0)
         {
             X = x;
             Y = y;
         }
 
+        #region Equals
         public override bool Equals(object obj)
         {
             if (obj == null)
@@ -44,6 +52,7 @@ namespace HeroesArena
         {
             return X ^ Y;
         }
+        #endregion
 
         // TODO
     }

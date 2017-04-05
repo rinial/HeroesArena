@@ -1,7 +1,4 @@
 ﻿// From package.
-using UnityEngine;
-using System;
-using System.Collections;
 using Handler = System.Action<System.Object, System.Object>;
 
 public static class NotificationExtensions

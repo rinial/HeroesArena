@@ -16,7 +16,7 @@ namespace HeroesArena
 
         public PlayerController LocalPlayer { get { return Owner.MatchController.LocalPlayer; } }
         // TODO do we need it?
-        public PlayerController RemotePlayer { get { return Owner.MatchController.RemotePlayer; } }
+        // public PlayerController RemotePlayer { get { return Owner.MatchController.RemotePlayer; } }
 
         protected virtual void Awake()
         {

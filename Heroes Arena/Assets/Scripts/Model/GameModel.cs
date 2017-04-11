@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace HeroesArena
@@ -114,20 +115,18 @@ namespace HeroesArena
         // rework this maybe.
         public void CreateAndAssignUnits()
         {
-            BasicUnit u1 = new BasicUnit(Map.Cells[new Coordinates(1, 1)]);
-            BasicUnit u2 = new BasicUnit(Map.Cells[new Coordinates(3, 3)]);
-            List<BasicUnit> units = new List<BasicUnit>();
-            units.Add(u1);
-            units.Add(u2);
-
-            // TODO names are not supposed to be here
-            string[] names = {"Ingvar", "Hrothgar"};
+            // TODO names are not supposed to be here.
+            string[] names = { "Arngrim", "Bjorn", "Einherjar", "Guomundr", "Hrothgar", "Ingvar", "Jonark", "Kjarr", "Niohad", "Orvar", "Palnatoke", "Ragnar", "Sigmund", "Volsung", "Weohstan", "Yrsa"};
 
             List<NetworkInstanceId> players = _players.Keys.ToList();
+            List<Cell> cells = Map.Cells.Values.ToList();
             for (int i = 0; i < players.Count; ++i)
             {
-                _players[players[i]].AssignUnit(units[i]);
-                _players[players[i]].Name = names[i];
+                // TODO units are not supposed to be created this way.
+                BasicUnit unit = new BasicUnit(cells[i]);
+
+                _players[players[i]].AssignUnit(unit);
+                _players[players[i]].Name = names[Random.Range(0, names.Length)];
             }
         }
 

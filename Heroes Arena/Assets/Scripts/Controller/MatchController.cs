@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace HeroesArena
@@ -8,17 +7,17 @@ namespace HeroesArena
     {
         public const string MatchReady = "MatchController.Ready";
 
+        // TODO should it be here? No.
+        public const int NumberOfPlayers = 3;
+
         // Checks if match is ready.
         public bool IsReady
         {
-            get { return LocalPlayer != null && RemotePlayer != null; }
+            get { return Players.Count == NumberOfPlayers; }
         }
-
-        // TODO change smth here for more players
+        
         public PlayerController LocalPlayer;
-        public PlayerController RemotePlayer;
-        public PlayerController HostPlayer;
-        public PlayerController ClientPlayer;
+
         public List<PlayerController> Players = new List<PlayerController>();
 
         void OnEnable()
@@ -52,34 +51,16 @@ namespace HeroesArena
             PlayerController pc = (PlayerController)sender;
             if (LocalPlayer == pc)
                 LocalPlayer = null;
-            if (RemotePlayer == pc)
-                RemotePlayer = null;
-            if (HostPlayer == pc)
-                HostPlayer = null;
-            if (ClientPlayer == pc)
-                ClientPlayer = null;
+
             if (Players.Contains(pc))
                 Players.Remove(pc);
         }
 
+        // Checks if the game is set and finishes preparations. 
         void Configure()
         {
-            if (LocalPlayer == null || Players.Count < 2)
-                return;
-
-            for (int i = 0; i < Players.Count; ++i)
-            {
-                if (Players[i] != LocalPlayer)
-                {
-                    RemotePlayer = Players[i];
-                    break;
-                }
-            }
-
-            HostPlayer = (LocalPlayer.isServer) ? LocalPlayer : RemotePlayer;
-            ClientPlayer = (LocalPlayer.isServer) ? RemotePlayer : LocalPlayer;
-
-            this.PostNotification(MatchReady);
+            if (LocalPlayer != null && Players.Count == NumberOfPlayers)
+                this.PostNotification(MatchReady);
         }
     }
 }

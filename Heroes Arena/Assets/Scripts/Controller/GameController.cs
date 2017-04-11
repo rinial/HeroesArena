@@ -45,13 +45,20 @@ namespace HeroesArena
         }
 
         // TODO lots of changes here
-
+        
         void OnMatchReady(object sender, object args)
         {
             // TODO
-            // we wait here for client to understand that match is ready
-            if (MatchController.ClientPlayer.isLocalPlayer)
-                MatchController.ClientPlayer.CmdInitiative();
+            // we wait here for client to understand that match is ready,
+            // we shoud probably find a way to see everyone is ready instead of a delay.
+            if (MatchController.LocalPlayer.isServer)
+                Invoke("StartGame", 1f);
+        }
+
+        void StartGame()
+        {
+            // TODO
+            MatchController.LocalPlayer.CmdInitiative();
         }
 
         void OnInitiative(object sender, object args)

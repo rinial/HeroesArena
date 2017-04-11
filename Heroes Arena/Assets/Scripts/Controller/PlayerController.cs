@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections;
 
 namespace HeroesArena
 {
@@ -40,6 +39,7 @@ namespace HeroesArena
             this.PostNotification(Destroyed);
         }
 
+        // TODO
         [Command]
         public void CmdInitiative()
         {

@@ -5,49 +5,27 @@ namespace HeroesArena
     // Controlls camera.
     public class CameraController : MonoBehaviour
     {
-        public Transform target;
-        public float damping = 1;
-        public float lookAheadFactor = 3;
-        public float lookAheadReturnSpeed = 0.5f;
-        public float lookAheadMoveThreshold = 0.1f;
+        // Target to follow.
+        public Transform Target;
 
-        private float m_OffsetZ;
-        private Vector3 m_LastTargetPosition;
-        private Vector3 m_CurrentVelocity;
-        private Vector3 m_LookAheadPos;
+        // The time it takes to move.
+        public float Damping = 1;
+        // Maximum camera speed.
+        public float MaxSpeed = 100;
+        // Distance from main plain. 
+        public const float ZDistance = 10;
         
-        private void Start()
-        {
-            if (target)
-            {
-                m_LastTargetPosition = target.position;
-                m_OffsetZ = (transform.position - target.position).z;
-            }
-        }
+        // Camera velocity.
+        private Vector2 _currentVelocity = Vector2.zero;
 
+        // Updates camera position every frame.
         private void Update()
         {
-            if (target)
+            // If Target is set, follows it.
+            if (Target)
             {
-                float xMoveDelta = (target.position - m_LastTargetPosition).x;
-
-                bool updateLookAheadTarget = Mathf.Abs(xMoveDelta) > lookAheadMoveThreshold;
-
-                if (updateLookAheadTarget)
-                {
-                    m_LookAheadPos = lookAheadFactor * Vector3.right * Mathf.Sign(xMoveDelta);
-                }
-                else
-                {
-                    m_LookAheadPos = Vector3.MoveTowards(m_LookAheadPos, Vector3.zero, Time.deltaTime * lookAheadReturnSpeed);
-                }
-
-                Vector3 aheadTargetPos = target.position + m_LookAheadPos + Vector3.forward * m_OffsetZ;
-                Vector3 newPos = Vector3.SmoothDamp(transform.position, aheadTargetPos, ref m_CurrentVelocity, damping);
-
-                transform.position = newPos;
-
-                m_LastTargetPosition = target.position;
+                Vector3 newPos = Vector2.SmoothDamp(transform.position, Target.position, ref _currentVelocity, Damping, MaxSpeed, Time.deltaTime);
+                transform.position = new Vector3(newPos.x, newPos.y, -ZDistance);
             }
             else
             {

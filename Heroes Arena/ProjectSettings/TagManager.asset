@@ -54,9 +54,6 @@ TagManager:
   - name: Grid
     uniqueID: 1786765607
     locked: 0
-  - name: Objects
-    uniqueID: 415579115
-    locked: 0
   - name: Units
     uniqueID: 3102999561
     locked: 0

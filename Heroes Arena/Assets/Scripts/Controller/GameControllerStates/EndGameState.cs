@@ -1,15 +1,16 @@
-﻿using UnityEngine;
-using System.Collections;
-using UnityEngine.Networking;
+﻿using UnityEngine.Networking;
 
 namespace HeroesArena
 {
+    // Represents one of GameController states, when game ended.
     public class EndGameState : BaseGameState
     {
+        // Executed when entering this state. 
         public override void Enter()
         {
             base.Enter();
 
+            // Updates UI elements.
             if (GameModel.Winner == NetworkInstanceId.Invalid)
             {
                 GameStateLabel.text = "State: Tie Game!";
@@ -22,17 +23,9 @@ namespace HeroesArena
             {
                 GameStateLabel.text = "State: You Lose!";
             }
-
             RefreshPlayerLabels();
 
-            if (!LocalPlayer.isServer)
-                StartCoroutine(Restart());
-        }
-
-        IEnumerator Restart()
-        {
-            yield return new WaitForSeconds(5);
-            LocalPlayer.CmdInitiative();
+            // TODO restart.
         }
     }
 }

@@ -150,6 +150,12 @@ MonoBehaviour:
     type: 2}
   m_PrefabInternal: {fileID: 1157699898}
   m_Script: {fileID: 11500000, guid: befcec12d00cd4f47b16e2c79d28de2c, type: 3}
+--- !u!114 &823936738 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 114760975065905162, guid: a79671a5e19112f4ba852938b77a089e,
+    type: 2}
+  m_PrefabInternal: {fileID: 1281023671}
+  m_Script: {fileID: 11500000, guid: 9d6abf1a1dbed484b988b42712c9bf0f, type: 3}
 --- !u!114 &826310681 stripped
 MonoBehaviour:
   m_PrefabParentObject: {fileID: 114891515139832834, guid: 988c8e106723f254391be463015f17f3,
@@ -243,6 +249,16 @@ Prefab:
       propertyPath: m_RootOrder
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 114399826893479280, guid: 6514cbac33038394b92eee7dbc78876d,
+        type: 2}
+      propertyPath: MatchController
+      value: 
+      objectReference: {fileID: 1052610509}
+    - target: {fileID: 114399826893479280, guid: 6514cbac33038394b92eee7dbc78876d,
+        type: 2}
+      propertyPath: CameraController
+      value: 
+      objectReference: {fileID: 823936738}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 6514cbac33038394b92eee7dbc78876d, type: 2}
   m_IsPrefabParent: 0
@@ -542,7 +558,7 @@ Prefab:
     - target: {fileID: 224883043754911672, guid: 988c8e106723f254391be463015f17f3,
         type: 2}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 17
       objectReference: {fileID: 0}
     - target: {fileID: 224493775693701986, guid: 988c8e106723f254391be463015f17f3,
         type: 2}
@@ -552,7 +568,7 @@ Prefab:
     - target: {fileID: 224493775693701986, guid: 988c8e106723f254391be463015f17f3,
         type: 2}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 17
       objectReference: {fileID: 0}
     - target: {fileID: 1351002647912086, guid: 988c8e106723f254391be463015f17f3, type: 2}
       propertyPath: m_IsActive

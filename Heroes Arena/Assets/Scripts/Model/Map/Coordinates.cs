@@ -1,24 +1,35 @@
+using System;
+
 namespace HeroesArena
 {
     // Represents coordinates on the grid in game logic.
-    public class Coordinates
+    public class Coordinates : ICloneable
     {
+        // Coordinates.
         public readonly int X, Y;
 
-        // UNetWeaver needs it for some reason.
+        #region Constructors
+        // Constructors. UNetWeaver needs basic constructor.
         public Coordinates()
         {
             X = 0;
             Y = 0;
         }
-
         public Coordinates(int x = 0, int y = 0)
         {
             X = x;
             Y = y;
         }
+        #endregion
+
+        // For cloning.
+        public object Clone()
+        {
+            return new Coordinates(X, Y);
+        }
 
         #region Equals
+        // Equality override.
         public override bool Equals(object obj)
         {
             if (obj == null)
@@ -53,7 +64,5 @@ namespace HeroesArena
             return X ^ Y;
         }
         #endregion
-
-        // TODO
     }
 }

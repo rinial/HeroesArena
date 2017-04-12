@@ -1,10 +1,21 @@
-﻿namespace HeroesArena
+﻿using System;
+
+namespace HeroesArena
 {
-    // TODO maybe change it to enum later if tiles are just pictures with no mechanics,
-    // represents one generiс tile in game logic.
-    public class BasicTile
+    // TODO maybe change it to enum later if tiles are just pictures with no mechanicsю
+    // Represents one generiс tile in game logic.
+    public class BasicTile : ICloneable
     {
+        // TODO tile parameters should be here.
+
+        // For cloning.
+        public object Clone()
+        {
+            return new BasicTile();
+        }
+
         #region Equals
+        // Equality override.
         public override bool Equals(object obj)
         {
             if (obj == null)
@@ -39,7 +50,5 @@
             return 0;
         }
         #endregion
-
-        // TODO
     }
 }

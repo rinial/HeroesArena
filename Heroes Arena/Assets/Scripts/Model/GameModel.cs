@@ -8,11 +8,16 @@ namespace HeroesArena
     // Interacts with other scripts and represents the logic behind gameplay.
     public class GameModel
     {
+        // TODO extract mapsize
+        public const int MapSize = 10;
+        public const int NumWalls = 10;
+
         // Notifications.
         public const string DidBeginGameNotification = "GameModel.DidBeginGameNotification";
-        public const string DidMakeMoveNotification = "GameModel.DidMakeMoveNotification";
+        public const string DidExecuteActionNotification = "GameModel.DidExecuteActionNotification";
         public const string DidChangeControlNotification = "GameModel.DidChangeControlNotification";
         public const string DidEndGameNotification = "GameModel.DidEndGameNotification";
+        public const string DidRequestMap = "GameModel.DidRequestMap";
 
         // Stores players and provides easy id-player access.
         private Dictionary<NetworkInstanceId, PlayerController> _players;
@@ -26,25 +31,40 @@ namespace HeroesArena
         // ID of the player who won.
         public NetworkInstanceId Winner { get; private set; }
 
-        #region Move
-        // Moves unit of the controlling player to another cell.
-        public void Move(Cell cell)
+        #region ActionExecution
+        // Executes action for the controlling player.
+        public void ExecuteAction(ActionParameters param)
         {
-            // Doesn't work if cell is not specified.
-            if (cell == null)
+            // If action is not specified.
+            if (param.Tag == ActionTag.None)
                 return;
 
-            // Moves the unit.
-            _players[Control].ControlledUnit.Move(cell);
+            // If no specified action.
+            if (!_players[Control].ControlledUnit.Actions.ContainsKey(param.Tag))
+                return;
+
+            // If no targets.
+            if (param.Targets == null)
+            {
+                _players[Control].ControlledUnit.Actions[param.Tag].Execute(Map);
+                return;
+            }
+
+            // Forms cells list.
+            List<Cell> cells = new List<Cell>();
+            foreach (Coordinates pos in param.Targets)
+            {
+                // If no cell for position.
+                if (!Map.Cells.ContainsKey(pos) || Map.Cells[pos] == null)
+                    return;
+                cells.Add(Map.Cells[pos]);
+            }
+
+            // Executes action.
+            _players[Control].ControlledUnit.Actions[param.Tag].Execute(cells, Map);
 
             // Notifies GameController that move was made.
-            this.PostNotification(DidMakeMoveNotification);
-        }
-        public void Move(Coordinates pos)
-        {
-            // Doesn't work if position can't be found on the map.
-            if (Map.Cells.ContainsKey(pos))
-                Move(Map.Cells[pos]);
+            this.PostNotification(DidExecuteActionNotification);
         }
         #endregion
 
@@ -54,8 +74,9 @@ namespace HeroesArena
             // Moves current controling player to the end of turn order.
             _turnOrder.Enqueue(_turnOrder.Dequeue());
             Control = _turnOrder.Peek();
+            _players[Control].ControlledUnit.TurnStart();
 
-            // Notifies GameController that move was made.
+            // Notifies GameController that turn was changed.
             this.PostNotification(DidChangeControlNotification);
         }
 
@@ -65,7 +86,15 @@ namespace HeroesArena
             Winner = NetworkInstanceId.Invalid;
             SetPlayers(players);
             SetTurnOrder();
-            CreateMap();
+
+            // Notifies GameController that map is needed.
+            var args = new int[] {MapSize, MapSize, NumWalls};
+            this.PostNotification(DidRequestMap, args);
+        }
+
+        public void ContinueReset(Map map)
+        {
+            Map = map;
             CreateObjects();
             CreateAndAssignUnits();
 
@@ -94,21 +123,11 @@ namespace HeroesArena
             Control = _turnOrder.Peek();
         }
 
-        // TODO this should be totally reworked.
         // Clears old map and creates new.
         public void CreateMap()
         {
-            // Just a 5x5 square.
-            List<Cell> cells = new List<Cell>();
-            for (int i = 0; i < 5; ++i)
-            {
-                for (int j = 0; j < 5; ++j)
-                {
-                    Cell c = new Cell(new Coordinates(i, j), new BasicTile());
-                    cells.Add(c);
-                }
-            }
-            Map = new Map(cells);
+            // generate a randomized map using the MapGenerator class
+            Map = MapGenerator.Generate(MapSize, NumWalls);
         }
 
         // Creates objects on the map.
@@ -126,10 +145,14 @@ namespace HeroesArena
 
             List<NetworkInstanceId> players = _players.Keys.ToList();
             List<Cell> cells = Map.Cells.Values.ToList();
+            int j = 0;
             for (int i = 0; i < players.Count; ++i)
             {
                 // TODO units are not supposed to be created this way.
-                BasicUnit unit = new BasicUnit(cells[i], Direction.Down, new Parameter<int>(5), new Parameter<int>(5));
+                while (!(cells[j].Tile.Walkable && cells[j].Unit == null))
+                    ++j;
+
+                BasicUnit unit = new BasicUnit(cells[j], Direction.Down, ClassTag.Rogue);
 
                 _players[players[i]].AssignUnit(unit);
                 _players[players[i]].Name = names[Random.Range(0, names.Length)];

@@ -10,23 +10,21 @@ namespace HeroesArena
         public GameModel GameModel = new GameModel();
         public GameView GameView;
         public MatchController MatchController;
-
-        // UI references.
-        public Text LocalPlayerLabel;
-        public Text GameStateLabel;
-        public GameObject EndTurnButton;
+        public PlayerController PlayerController;
 
         // Observes some notifications from MatchController, GameModel and PlayerController.
         private void OnEnable()
         {
             this.AddObserver(OnMatchReady, MatchController.MatchReady);
             this.AddObserver(OnDidBeginGame, GameModel.DidBeginGameNotification);
-            this.AddObserver(OnDidMakeMove, GameModel.DidMakeMoveNotification);
+            this.AddObserver(OnDidExecuteAction, GameModel.DidExecuteActionNotification);
             this.AddObserver(OnDidChangeControl, GameModel.DidChangeControlNotification);
             this.AddObserver(OnDidEndGame, GameModel.DidEndGameNotification);
+            this.AddObserver(OnDidRequestMap, GameModel.DidRequestMap);
             this.AddObserver(OnInitiative, PlayerController.Initiative);
-            this.AddObserver(OnRequestMakeMove, PlayerController.RequestMakeMove);
+            this.AddObserver(OnRequestExecuteAction, PlayerController.RequestExecuteAction);
             this.AddObserver(OnRequestEndTurn, PlayerController.RequestEndTurn);
+            this.AddObserver(OnMapCreated, PlayerController.MapCreated);
         }
 
         // Stops observing when disabled.
@@ -34,12 +32,14 @@ namespace HeroesArena
         {
             this.RemoveObserver(OnMatchReady, MatchController.MatchReady);
             this.RemoveObserver(OnDidBeginGame, GameModel.DidBeginGameNotification);
-            this.RemoveObserver(OnDidMakeMove, GameModel.DidMakeMoveNotification);
+            this.RemoveObserver(OnDidExecuteAction, GameModel.DidExecuteActionNotification);
             this.RemoveObserver(OnDidChangeControl, GameModel.DidChangeControlNotification);
             this.RemoveObserver(OnDidEndGame, GameModel.DidEndGameNotification);
             this.RemoveObserver(OnInitiative, PlayerController.Initiative);
-            this.RemoveObserver(OnRequestMakeMove, PlayerController.RequestMakeMove);
+            this.RemoveObserver(OnRequestExecuteAction, PlayerController.RequestExecuteAction);
             this.RemoveObserver(OnRequestEndTurn, PlayerController.RequestEndTurn);
+            this.RemoveObserver(OnDidRequestMap, GameModel.DidRequestMap);
+            this.RemoveObserver(OnMapCreated, PlayerController.MapCreated);
         }
 
         // Checks state at start.
@@ -47,14 +47,27 @@ namespace HeroesArena
         {
             CheckState();
         }
-        
-        // MatchController. Executed when match is ready.
+
+        // Called from MatchController when match is ready.
         void OnMatchReady(object sender, object args)
         {
             // We wait here for clients to understand that match is ready.
             // TODO we shoud probably find a way to see when everyone is ready instead of a delay.
             if (MatchController.LocalPlayer.isServer)
                 Invoke("StartGame", 1f);
+        }
+
+        void OnDidRequestMap(object sender, object args)
+        {
+            // arguments: width, height, number of rand. walls
+            var intArgs = args as int[];
+            if (MatchController.LocalPlayer.isServer)
+                PlayerController.CmdCreateMap(intArgs[0], intArgs[1], intArgs[2], intArgs[2]);
+        }
+
+        void OnMapCreated(object sender, object args)
+        {
+            GameModel.ContinueReset(args as Map);
         }
 
         // Called only by the host starts the game.
@@ -64,28 +77,36 @@ namespace HeroesArena
             MatchController.LocalPlayer.CmdInitiative();
         }
 
-        // PlayerController. Called when initiative is decided.
+        // Called from PlayerController when initiative is decided.
         void OnInitiative(object sender, object args)
         {
             // TODO no initiative used, just starts the game, should be changed.
             GameModel.Reset(MatchController.Players);
         }
 
-        // PlayerController. Called when move is requested.
-        void OnRequestMakeMove(object sender, object args)
+        // Called from PlayerController when action execution is requested.
+        void OnRequestExecuteAction(object sender, object args)
         {
-            // Calls move for controlling player.
-            GameModel.Move((Coordinates)args);
+            // Calls action execution for controlling player.
+            GameModel.ExecuteAction((ActionParameters)args);
         }
 
-        // PlayerController. Called when turn end is requested.
+        // Called from GameModel when action is executed.
+        void OnDidExecuteAction(object sender, object args)
+        {
+            // Shows new map after the action execution.
+            // TODO it should only show visible part of map for player.
+            GameView.Show(GameModel.Map);
+        }
+
+        // Called from PlayerController when turn end is requested.
         void OnRequestEndTurn(object sender, object args)
         {
             // Calls turn change.
             GameModel.ChangeTurn();
         }
 
-        // GameModel. Clears the map at the start of game.
+        // Called from GameModel when game starts.
         void OnDidBeginGame(object sender, object args)
         {
             // Draws the whole map.
@@ -96,26 +117,22 @@ namespace HeroesArena
             CheckState();
         }
 
-        // GameModel. Called when controlling player is changed.
+        // Called from GameModel when controlling player is changed.
         void OnDidChangeControl(object sender, object args)
         {
-            // Checks state.
-            CheckState();
-        }
-        
-        // GameModel. Called when game is ended.
-        void OnDidEndGame(object sender, object args)
-        { 
+            // Draws the whole map.
+            // TODO it should only show visible part of map for player.
+            GameView.Show(GameModel.Map);
+
             // Checks state.
             CheckState();
         }
 
-        // GameModel. Called when move is made.
-        void OnDidMakeMove(object sender, object args)
+        // Called from GameModel when game is ended.
+        void OnDidEndGame(object sender, object args)
         {
-            // Showes new map after the move.
-            // TODO it should only show visible part of map for player.
-            GameView.Show(GameModel.Map);
+            // Checks state.
+            CheckState();
         }
 
         // Checks and changes state of GameController.

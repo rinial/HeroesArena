@@ -17,11 +17,15 @@ namespace HeroesArena
 
         // UI references.
         // Label with player name.
-        public Text LocalPlayerLabel { get { return Owner.LocalPlayerLabel; } }
+        public Text LocalPlayerLabel { get { return GameView.LocalPlayerLabel; } }
         // Label with game state.
-        public Text GameStateLabel { get { return Owner.GameStateLabel; } }
+        public Text GameStateLabel { get { return GameView.GameStateLabel; } }
         // Button for turn end.
-        public GameObject EndTurnButton { get { return Owner.EndTurnButton; } }
+        public Button EndTurnButton { get { return GameView.EndTurnButton; } }
+        // Button for move mode.
+        public Button MoveButton { get { return GameView.MoveButton; } }
+        // Button for attack mode.
+        public Button AttackButton { get { return GameView.AttackButton; } }
 
         // Sets owner.
         protected virtual void Awake()

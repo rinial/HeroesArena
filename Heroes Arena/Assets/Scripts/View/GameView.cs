@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -19,12 +20,23 @@ namespace HeroesArena
         public MatchController MatchController;
         public CameraController CameraController;
 
+        #region UI References
         // UI references.
         public GameObject Tiles;
         public GameObject Objects;
         public GameObject Units;
         public GameObject Grid;
-        public GameObject Highlight;
+        public GameObject ActionHighlights;
+        public GameObject RouteHighlights;
+        public GameObject MouseHighlight;
+        public Text LocalPlayerLabel;
+        public Text GameStateLabel;
+        public GameObject HealthBar;
+        public GameObject ActionBar;
+        public Button EndTurnButton;
+        public Button AttackButton;
+        public Button MoveButton;
+        #endregion
 
         #region Prefabs
         // TODO maybe it should be moved somewhere else.
@@ -34,9 +46,25 @@ namespace HeroesArena
         [SerializeField]
         private GameObject Ground;
         [SerializeField]
+        private GameObject Ground1;
+        [SerializeField]
+        private GameObject Ground2;
+        [SerializeField]
+        private GameObject RedGround1;
+        [SerializeField]
+        private GameObject RedGround2;
+
+
+        [SerializeField]
+        private GameObject WallLow;
+        [SerializeField]
+        private GameObject Wall;
+        [SerializeField]
         private GameObject Rogue;
         [SerializeField]
         private GameObject HealthPotion;
+        [SerializeField]
+        private GameObject ActionHighlight;
         #endregion
 
         // Stores gameobject references and provides easy position-gameobjects access.
@@ -45,6 +73,10 @@ namespace HeroesArena
         private Map _oldMap;
         // Checks if grid should be shown.
         private bool _showGrid = true;
+        // Checks if action highlights should be shown.
+        private bool _showActionHighlights = false;
+        // Action that would be used upon click.
+        private ActionTag _clickAction = ActionTag.LongMove;
 
         // Initialization.
         private void OnEnable()
@@ -60,13 +92,15 @@ namespace HeroesArena
             Coordinates coords = WorldToCoordinates(mousePos);
             if (_shownCells.ContainsKey(coords))
             {
-                Highlight.SetActive(true);
-                SetGridPosition(Highlight, coords);
+                MouseHighlight.SetActive(true);
+                SetOnGrid(MouseHighlight, coords);
+                ShowRouteHighlights(coords);
             }
             else
-                Highlight.SetActive(false);
+                MouseHighlight.SetActive(false);
         }
 
+        #region Show/Clear Map
         // Shows one cell.
         public void Show(Cell cell)
         {
@@ -75,38 +109,44 @@ namespace HeroesArena
 
             // TODO tile should depend on cell.Tile
             // Shows tile of the cell.
-            GameObject tile = Instantiate(Ground, Tiles.transform);
+            GameObject tile = ShowOnGrid(GetTilePrefab(cell.Tile.Type), Tiles, cell);
             gameObjects.Add(tile);
 
             // TODO unit should depend on cell.Unit
             // Shows unit on the cell.
             if (cell.Unit != null)
             {
-                GameObject unit = Instantiate(Rogue, Units.transform);
+                GameObject unit = ShowOnGrid(Rogue, Units, cell);
                 gameObjects.Add(unit);
+
                 // Updates unit animation.
                 UpdateUnitAnimation(cell.Unit, unit);
 
-                // Sets camera to follow unit if it is controlled by local player.
-                if (cell.Unit == MatchController.LocalPlayer.ControlledUnit)
-                    CameraController.Target = unit.transform;
-
                 // Fill health bar.
                 Parameter<int> healthPoints = cell.Unit.HealthPoints;
-                unit.transform.Find("HealthBar").Find("Fill").GetComponent<Image>().fillAmount = (float)healthPoints.Current / healthPoints.Maximum;
+                FillBar(unit.transform.Find("HealthBar"), healthPoints);
+
+                // Fill action bar.
+                Parameter<int> actionPoints = cell.Unit.ActionPoints;
+                FillBar(unit.transform.Find("ActionBar"), actionPoints);
+
+                // Sets camera to follow unit if it is controlled by local player. Also fills bars on UI.
+                if (cell.Unit == MatchController.LocalPlayer.ControlledUnit)
+                {
+                    FillBar(HealthBar.transform, healthPoints);
+                    FillBar(ActionBar.transform, actionPoints);
+
+                    CameraController.Target = unit.transform;
+                }
             }
 
             // TODO object should depend on cell.Object
             // Shows object on the cell.
             if (cell.Object != null)
             {
-                GameObject obj = Instantiate(HealthPotion, Objects.transform);
+                GameObject obj = ShowOnGrid(HealthPotion, Objects, cell);
                 gameObjects.Add(obj);
             }
-
-            // Sets correct position of sorting order for new gameObjects.
-            foreach (GameObject gameObj in gameObjects)
-                SetOnGrid(gameObj, cell.Position);
 
             // Shows one grid cell if it is to be shown.
             if (_showGrid)
@@ -130,6 +170,8 @@ namespace HeroesArena
                 }
             }
             _oldMap = (Map)map.Clone();
+            if (_showActionHighlights)
+                ShowActionHighlights();
         }
 
         // Clears everything that is not supposed to be shown.
@@ -164,26 +206,18 @@ namespace HeroesArena
             DestroyAllChildren(Objects.transform);
             DestroyAllChildren(Units.transform);
             ClearGrid();
-            Highlight.SetActive(false);
+            ClearActionHighlights();
+            MouseHighlight.SetActive(false);
             _shownCells = new Dictionary<Coordinates, List<GameObject>>();
             _oldMap = null;
         }
+        #endregion
 
-        // TODO should not be here.
-        // Destroys all children of transform.
-        public static void DestroyAllChildren(Transform obj)
-        {
-            int count = obj.childCount;
-            for (int j = count - 1; j >= 0; --j)
-                Destroy(obj.GetChild(j).gameObject);
-        }
-
-        #region Grid
+        #region Show/Clear Grid
         // Shows one grid cell.
         public void ShowGridCell(Coordinates pos)
         {
-            GameObject grid = Instantiate(GridTile, Grid.transform);
-            SetOnGrid(grid, pos);
+            ShowOnGrid(GridTile, Grid, pos);
         }
         // Clears and then shows full grid.
         public void ShowGrid()
@@ -202,59 +236,140 @@ namespace HeroesArena
         // Clears grid.
         public void ClearGrid()
         {
-            DestroyAllChildren(Grid.transform);
+            DestroyAllChildren(Grid);
         }
         #endregion
 
-        // TODO do here more than just direction change.
-        // Updates units animation.
-        public void UpdateUnitAnimation(BasicUnit unit, GameObject unitObject)
+        #region Show/Clear Route Highlights
+        // Shows one route highlight cell.
+        public void ShowRouteHighlightCell(Coordinates pos)
         {
-            // Gets unit animator.
-            Animator animator = unitObject.GetComponent<Animator>();
-
-            if (animator == null)
+            ShowOnGrid(ActionHighlight, RouteHighlights, pos);
+        }
+        // Clears and then shows route highlights.
+        public void ShowRouteHighlights(Coordinates target)
+        {
+            ClearRouteHighlights();
+            Action action = MatchController.LocalPlayer.ControlledUnit.Actions[_clickAction];
+            if (action == null || !_oldMap.Cells.ContainsKey(target))
                 return;
-
-            // Sets animation depending on facing.
-            switch (unit.Facing)
+            if (action.Tag == ActionTag.LongMove)
             {
-                case Direction.Up:
-                    animator.SetFloat("xFacing", 0);
-                    animator.SetFloat("yFacing", 1);
-                    break;
-                case Direction.Left:
-                    animator.SetFloat("xFacing", -1);
-                    animator.SetFloat("yFacing", 0);
-                    break;
-                case Direction.Down:
-                    animator.SetFloat("xFacing", 0);
-                    animator.SetFloat("yFacing", -1);
-                    break;
-                case Direction.Right:
-                    animator.SetFloat("xFacing", 1);
-                    animator.SetFloat("yFacing", 0);
-                    break;
+                LongMoveAction longMove = (LongMoveAction)action;
+                int distance = longMove.PossibleDistance;
+                Cell center = _oldMap.Cells[MatchController.LocalPlayer.ControlledUnit.Cell.Position];
+                Route route = _oldMap.GetRoute(center, _oldMap.Cells[target], distance);
+                if (route == null)
+                    return;
+                List<Cell> cells = route.Cells;
+                foreach (Cell cell in cells)
+                {
+                    if (cell != center)
+                        ShowRouteHighlightCell(cell.Position);
+                }
             }
         }
+        // Clears action highlights.
+        public void ClearRouteHighlights()
+        {
+            DestroyAllChildren(RouteHighlights);
+        }
+        #endregion
 
-        // Handles click on map event.
+        #region Show/Clear Action Highlights
+        // Shows one action highlight cell.
+        public void ShowActionHighlightCell(Coordinates pos)
+        {
+            ShowOnGrid(ActionHighlight, ActionHighlights, pos);
+        }
+        // Clears and then shows action highlights.
+        public void ShowActionHighlights()
+        {
+            ClearActionHighlights();
+            _showActionHighlights = true;
+            Action action = MatchController.LocalPlayer.ControlledUnit.Actions[_clickAction];
+            if (action == null)
+                return;
+            if (action.Tag != ActionTag.LongMove)
+                foreach (Coordinates pos in _shownCells.Keys)
+                {
+                    if (action.InRange(pos, _oldMap))
+                        ShowActionHighlightCell(pos);
+                }
+            else
+            {
+                LongMoveAction longMove = (LongMoveAction) action;
+                int distance = longMove.PossibleDistance;
+                Cell center = _oldMap.Cells[MatchController.LocalPlayer.ControlledUnit.Cell.Position];
+                List<Cell> cells = _oldMap.GetCellsInRange(center, distance).Keys.ToList();
+                foreach (Cell cell in cells)
+                {
+                    if (cell != center)
+                        ShowActionHighlightCell(cell.Position);
+                }
+            }
+        }
+        // Hides action highlights.
+        public void HideActionHighlights()
+        {
+            _showActionHighlights = false;
+            ClearActionHighlights();
+        }
+        // Clears action highlights.
+        public void ClearActionHighlights()
+        {
+            DestroyAllChildren(ActionHighlights);
+        }
+        #endregion
+
+        #region Player Actions
+        // Called when map cell is clicked.
         void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
         {
             // Gets click position.
-            Vector2 clickPos = eventData.pointerCurrentRaycast.worldPosition;
+            Coordinates clickPos = WorldToCoordinates(eventData.pointerCurrentRaycast.worldPosition);
 
             // Notifies GameController.ActiveGameState that cell was clicked.
-            this.PostNotification(CellClickedNotification, WorldToCoordinates(clickPos));
+            this.PostNotification(CellClickedNotification, new ActionParameters(_clickAction, clickPos));
         }
 
         // Called when EndTurn button is clicked.
         public void OnEndTurnClick()
         {
+            // Sets chosen click action back to move.
+            OnMoveClick();
+
             // Notifies GameController.ActiveGameState that EndTurn button was clicked.
             this.PostNotification(EndTurnClickedNotification);
         }
 
+        // Called when Move button is clicked.
+        public void OnMoveClick()
+        {
+            // Sets correct click action.
+            _clickAction = ActionTag.LongMove;
+
+            // Sets button not interactable anymore.
+            MoveButton.interactable = false;
+            AttackButton.interactable = true;
+
+            ShowActionHighlights();
+        }
+
+        // Called when Attack button is clicked.
+        public void OnAttackClick()
+        {
+            // Sets correct click action.
+            _clickAction = ActionTag.Attack;
+
+            // Sets button not interactable anymore.
+            AttackButton.interactable = false;
+            MoveButton.interactable = true;
+            ShowActionHighlights();
+        }
+        #endregion
+
+        #region Static Grid Methods
         // Gets grid coordinates from world position.
         public static Coordinates WorldToCoordinates(Vector2 pos)
         {
@@ -285,5 +400,96 @@ namespace HeroesArena
         {
             SetOnGrid(gameObj, cell.Position);
         }
+
+        // Shows one prefab object on grid.
+        public static GameObject ShowOnGrid(GameObject prefab, GameObject parent, Coordinates pos)
+        {
+            GameObject obj = Instantiate(prefab, parent.transform);
+            SetOnGrid(obj, pos);
+            return obj;
+        }
+        public static GameObject ShowOnGrid(GameObject prefab, GameObject parent, Cell cell)
+        {
+            return ShowOnGrid(prefab, parent, cell.Position);
+        }
+        #endregion
+
+        // Fills the given bar with given int parameter.
+        public static void FillBar(Transform bar, Parameter<int> par)
+        {
+            bar.Find("Fill").GetComponent<Image>().fillAmount = (float)par.Current / par.Maximum;
+        }
+
+        // TODO do here more than just direction change.
+        // Updates units animation.
+        public static void UpdateUnitAnimation(BasicUnit unit, GameObject unitObject)
+        {
+            // Gets unit animator.
+            Animator animator = unitObject.GetComponent<Animator>();
+
+            if (animator == null)
+                return;
+
+            // Sets animation depending on facing.
+            switch (unit.Facing)
+            {
+                case Direction.Up:
+                    animator.SetFloat("xFacing", 0);
+                    animator.SetFloat("yFacing", 1);
+                    break;
+                case Direction.Left:
+                    animator.SetFloat("xFacing", -1);
+                    animator.SetFloat("yFacing", 0);
+                    break;
+                case Direction.Down:
+                    animator.SetFloat("xFacing", 0);
+                    animator.SetFloat("yFacing", -1);
+                    break;
+                case Direction.Right:
+                    animator.SetFloat("xFacing", 1);
+                    animator.SetFloat("yFacing", 0);
+                    break;
+            }
+        }
+
+        // Returns a corresponding prefab.
+        public GameObject GetTilePrefab(TileType type)
+        {
+            // TODO rewrite the whole tile system
+            switch (type)
+            {
+                case TileType.Ground:
+                    return Ground;
+                case TileType.Ground1:
+                    return Ground1;
+                case TileType.Ground2:
+                    return Ground2;
+                case TileType.RedGround1:
+                    return RedGround1;
+                case TileType.RedGround2:
+                    return RedGround2;
+                case TileType.Wall:
+                    return Wall;
+                case TileType.WallLow:
+                    return WallLow;
+            }
+
+            return null;
+        }
+
+        #region Destroy Children
+        // TODO should not be here.
+        // Destroys all children of transform.
+        public static void DestroyAllChildren(Transform obj)
+        {
+            int count = obj.childCount;
+            for (int j = count - 1; j >= 0; --j)
+                Destroy(obj.GetChild(j).gameObject);
+        }
+        public static void DestroyAllChildren(GameObject obj)
+        {
+            DestroyAllChildren(obj.transform);
+        }
+        #endregion
     }
 }

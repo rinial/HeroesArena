@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace HeroesArena
 {
@@ -7,6 +8,50 @@ namespace HeroesArena
     {
         // Coordinates.
         public readonly int X, Y;
+
+        public List<Coordinates> GetClose()
+        {
+            List<Coordinates> list = new List<Coordinates>();
+            list.AddRange(new[]
+            {
+                new Coordinates(X - 1, Y),
+                new Coordinates(X + 1, Y),
+                new Coordinates(X, Y - 1),
+                new Coordinates(X, Y + 1)
+            });
+            return list;
+        }
+
+        #region DistanceMethods
+        // Counts distance from this point to target point.
+        public int Distance(Coordinates target)
+        {
+            return Distance(this, target);
+        }
+        // Counts distance from A point to B point.
+        public static int Distance(Coordinates a, Coordinates b)
+        {
+            return Math.Abs(b.X - a.X) + Math.Abs(b.Y - a.Y);
+        }
+        #endregion
+
+        #region DirectionMethods
+        // Gets direction from this point to target point.
+        public Direction GetDirection(Coordinates target)
+        {
+            return GetDirection(this, target);
+        }
+        // Gets direction from A point to B point.
+        public static Direction GetDirection(Coordinates a, Coordinates b)
+        {
+            int dX = b.X - a.X;
+            int dY = b.Y - a.Y;
+            return dY <= dX && dY <= -dX ? Direction.Down
+                 : dY >= dX && dY >= -dX ? Direction.Up
+                 : dX > dY ? Direction.Right
+                 : Direction.Left;
+        }
+        #endregion
 
         #region Constructors
         // Constructors. UNetWeaver needs basic constructor.

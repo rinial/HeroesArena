@@ -8,14 +8,66 @@ namespace HeroesArena
         // Position of cell on map.
         public Coordinates Position { get; private set; }
         // Tile of the cell.
-        public BasicTile Tile { get; private set; }
+        public BasicTile Tile { get; set; }
         // TODO make it list if we need multiple objects on one cell.
         // Object on the cell.
-        public BasicObject Object;
+        private BasicObject _object;
+        public BasicObject Object
+        {
+            get
+            {
+                return _object;
+            }
+            set
+            {
+                _object = value;
+                if(value != null)
+                    OnCellEnter += value.OnObjectUse;
+            }
+        }
         // Unit on the cell.
-        public BasicUnit Unit;
+        private BasicUnit _unit;
+        public BasicUnit Unit
+        {
+            get
+            {
+                return _unit;
+            }
+            set
+            {
+                _unit = value;
+                OnCellEnter(value);
+            }
+        }
 
-        // TODO some triggers should be called from here like OnCellEnter.
+        // Called when unit enters cell.
+        public event System.Action<BasicUnit> OnCellEnter = delegate { };
+
+        #region DistanceMethods
+        // Counts distance from this cell to target cell.
+        public int Distance(Cell target)
+        {
+            return Position.Distance(target.Position);
+        }
+        // Counts distance from A cell to B cell.
+        public static int Distance(Cell a, Cell b)
+        {
+            return Coordinates.Distance(a.Position, b.Position);
+        }
+        #endregion
+
+        #region DirectionMethods
+        // Gets direction from this cell to target cell.
+        public Direction GetDirection(Cell target)
+        {
+            return Position.GetDirection(target.Position);
+        }
+        // Gets direction from A cell to B cell.
+        public static Direction GetDirection(Cell a, Cell b)
+        {
+            return Coordinates.GetDirection(a.Position, b.Position);
+        }
+        #endregion
 
         #region Constructors
         // Constructors. Every cell MUST have assigned position and tile.
@@ -85,7 +137,14 @@ namespace HeroesArena
         // For Equals.
         public override int GetHashCode()
         {
-            return Position.GetHashCode() ^ Tile.GetHashCode() ^ Object.GetHashCode() ^ Unit.GetHashCode();
+            if (Object == null)
+                return Unit == null
+                    ? Position.GetHashCode() ^ Tile.GetHashCode()
+                    : Position.GetHashCode() ^ Tile.GetHashCode() ^ Unit.GetHashCode();
+            else
+                return Unit == null
+                    ? Position.GetHashCode() ^ Tile.GetHashCode() ^ Object.GetHashCode()
+                    : Position.GetHashCode() ^ Tile.GetHashCode() ^ Object.GetHashCode() ^ Unit.GetHashCode();
         }
         #endregion
     }

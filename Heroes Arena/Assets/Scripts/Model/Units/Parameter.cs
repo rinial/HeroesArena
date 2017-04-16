@@ -44,6 +44,12 @@ namespace HeroesArena
             }
         }
 
+        // Resets current value to maximum.
+        public void Reset()
+        {
+            Current = Maximum;
+        }
+
         #region Constructors
         // Constructors.
         public Parameter(T maximum)

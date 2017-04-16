@@ -6,12 +6,20 @@ namespace HeroesArena
     // Represents one generiс tile in game logic.
     public class BasicTile : ICloneable
     {
-        // TODO tile parameters should be here.
+        public readonly TileType Type;
+        public readonly bool Walkable;
+
+        // Constructor.
+        public BasicTile(TileType type, bool walkable = true)
+        {
+            Type = type;
+            Walkable = walkable;
+        }
 
         // For cloning.
         public object Clone()
         {
-            return new BasicTile();
+            return new BasicTile(Type, Walkable);
         }
 
         #region Equals
@@ -30,7 +38,7 @@ namespace HeroesArena
                 return false;
             }
 
-            return true;
+            return Type.Equals(tile.Type) && Walkable.Equals(tile.Walkable);
         }
 
         // For performance.
@@ -41,13 +49,13 @@ namespace HeroesArena
                 return false;
             }
 
-            return true;
+            return Type.Equals(tile.Type) && Walkable.Equals(tile.Walkable);
         }
 
         // For Equals.
         public override int GetHashCode()
         {
-            return 0;
+            return Type.GetHashCode() ^ Walkable.GetHashCode();
         }
         #endregion
     }

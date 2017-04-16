@@ -1,37 +1,59 @@
 ﻿using System;
-using UnityEngine;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace HeroesArena
 {
     // Represents one generiс unit in game logic.
-    public class BasicUnit : ICloneable, IDamageDealer, IDamageable
+    public class BasicUnit : ICloneable, IExecuter, IDamageDealer, IDamageable
     {
         // Cell containing this unit.
         public Cell Cell;
         // Direction where unit is looking.
         public Direction Facing { get; private set; }
         // Unit's health points.
-        public Parameter<int> HealthPoints { get; private set; }
-        // Unit's action points.
-        public Parameter<int> ActionPoints { get; private set; }
-
-        // Moves unit to another cell.
-        public void Move(Cell cell)
+        public Parameter<int> HealthPoints
         {
-            if (cell.Unit == null)
-            {
-                // TODO add some choise of facing here in cases like moving 45 degrees up right.
-                Facing = DirectionOfMovement(Cell, cell);
+            get { return Class.HealthPoints; }
+            set { Class.HealthPoints = value; }
+        }
+        // Unit's action points.
+        public Parameter<int> ActionPoints
+        {
+            get { return Class.ActionPoints; }
+            set { Class.ActionPoints = value; }
+        }
+        // Unit's class.
+        public Class Class { get; private set; }
+        // Stores unit's actions while providing convinient access to them.
+        public Dictionary<ActionTag, Action> Actions = new Dictionary<ActionTag, Action>();
 
-                cell.Unit = this;
-                Cell.Unit = null;
-                Cell = cell;
-            }
-            else if (cell.Unit != this)
+        // Adds action to the Actions.
+        public void AddAction(Action action)
+        {
+            // If action with the same tag already exists.
+            if (action == null || Actions.ContainsKey(action.Tag))
+                return;
+
+            Actions[action.Tag] = action;
+        }
+        public void AddActions(Dictionary<ActionTag, Action> actions)
+        {
+            foreach (Action action in actions.Values)
             {
-                // TODO this is just an attack test that is not supposed to be here. Also magic number.
-                DealDamage(cell.Unit, new Damage(2));
+                AddAction(action);
             }
+        }
+
+        // Uses action points and returns true if everything was ok.
+        public bool UseActionPoints(int cost)
+        {
+            // If there are not enough action points.
+            if (cost < 0 || ActionPoints.Current < cost)
+                return false;
+
+            ActionPoints.Current -= cost;
+            return true;
         }
 
         // Deals damage to target.
@@ -39,51 +61,54 @@ namespace HeroesArena
         {
             target.TakeDamage(this, damage);
         }
-
         // Takes damage from source.
         public void TakeDamage(IDamageDealer source, Damage damage)
         {
             HealthPoints.Current -= damage.Amount;
         }
+        // Gets healed.
+        public void Heal(int amount)
+        {
+            HealthPoints.Current += amount;
+        }
 
-        #region Direction Methods
-        // TODO this is probably not the right place for these methods, move.
-        // Gets the facing direction after movement.
-        public static Direction DirectionOfMovement(int dX, int dY)
+        // Updates unit's facing.
+        public void UpdateFacing(Cell cell)
         {
-            return dY <= dX && dY <= -dX ? Direction.Down
-                 : dY >= dX && dY >= -dX ? Direction.Up
-                 : dX > dY ? Direction.Right
-                 : Direction.Left;
+            Facing = Cell.GetDirection(cell);
         }
-        public static Direction DirectionOfMovement(Coordinates start, Coordinates end)
+
+        // Called when turn for player controlling this unit starts.
+        public void TurnStart()
         {
-            int dX = end.X - start.X;
-            int dY = end.Y - start.Y;
-            return DirectionOfMovement(dX, dY);
+            ActionPoints.Reset();
         }
-        public static Direction DirectionOfMovement(Cell start, Cell end)
-        {
-            return DirectionOfMovement(start.Position, end.Position);
-        }
-        #endregion
 
         // Constructor.
-        public BasicUnit(Cell cell, Direction facing, Parameter<int> healthPoints, Parameter<int> actionPoints)
+        public BasicUnit(Cell cell, Direction facing, ClassTag clas)
         {
             Cell = cell;
             if (cell != null)
                 Cell.Unit = this;
             Facing = facing;
-            HealthPoints = healthPoints;
-            ActionPoints = actionPoints;
+
+            Class = Class.GetNewClass(clas, this);
+
+            // TODO magic number
+            // Every unit has move action.
+            MoveAction basicMove = new MoveAction(this, 3);
+            AddAction(basicMove);
+            AddAction(new LongMoveAction(basicMove));
         }
 
         // For cloning.
         public object Clone()
         {
             // We don't clone Cell to avoid recursion.
-            return new BasicUnit(null, Facing, (Parameter<int>)HealthPoints.Clone(), (Parameter<int>)ActionPoints.Clone());
+            BasicUnit unit = new BasicUnit(null, Facing, Class.Tag);
+            unit.HealthPoints = (Parameter<int>)HealthPoints.Clone();
+            unit.ActionPoints = (Parameter<int>)ActionPoints.Clone();
+            return unit;
         }
 
         #region Equals
@@ -102,8 +127,8 @@ namespace HeroesArena
                 return false;
             }
 
-            // We don't check if Cell.Equals(unit.Cell) to avoid recursion.
-            return Facing.Equals(unit.Facing) && HealthPoints.Equals(unit.HealthPoints) && ActionPoints.Equals(unit.ActionPoints);
+            // We don't check if Cell.Equals(unit.Cell) to avoid recursion. We also ignore actions.
+            return Facing.Equals(unit.Facing) && Class.Equals(unit.Class);
         }
 
         // For performance.
@@ -114,15 +139,15 @@ namespace HeroesArena
                 return false;
             }
 
-            // We don't check if Cell.Equals(unit.Cell) to avoid recursion.
-            return Facing.Equals(unit.Facing) && HealthPoints.Equals(unit.HealthPoints) && ActionPoints.Equals(unit.ActionPoints);
+            // We don't check if Cell.Equals(unit.Cell) to avoid recursion. We also ignore actions.
+            return Facing.Equals(unit.Facing) && Class.Equals(unit.Class);
         }
 
         // For Equals.
         public override int GetHashCode()
         {
-            // We don't add Cell.GetHashCode() to avoid recursion.
-            return Facing.GetHashCode() ^ HealthPoints.GetHashCode() ^ ActionPoints.GetHashCode();
+            // We don't add Cell.GetHashCode() to avoid recursion. We also ignore actions.
+            return Facing.GetHashCode() ^ Class.GetHashCode();
         }
         #endregion
     }

@@ -1,4 +1,6 @@
-﻿namespace HeroesArena
+﻿using UnityEngine.UI;
+
+namespace HeroesArena
 {
     // Represents one of GameController states, when local player is in control.
     public class ActiveGameState : BaseGameState
@@ -10,8 +12,12 @@
 
             // Updates UI elements.
             GameStateLabel.text = "State: Your Turn!";
-            EndTurnButton.SetActive(true);
+            EndTurnButton.interactable = true;
+            MoveButton.interactable = true;
+            AttackButton.interactable = true;
             RefreshPlayerLabels();
+            // Sets chosen click action to move. Shows action highlight.
+            GameView.OnMoveClick();
         }
 
         // Executed when leaving this state.
@@ -20,7 +26,10 @@
             base.Exit();
 
             // Updates UI elements.
-            EndTurnButton.SetActive(false);
+            EndTurnButton.interactable = false;
+            MoveButton.interactable = false;
+            AttackButton.interactable = false;
+            GameView.HideActionHighlights();
         }
 
         // During active phase observes CellClicked and EndTurn notifications.
@@ -39,14 +48,13 @@
             this.RemoveObserver(OnEndTurnClicked, GameView.EndTurnClickedNotification);
         }
 
-        // GameView. Executed when cell on map is clicked.
+        // Called from GameView when cell on map is clicked.
         private void OnMapCellClicked(object sender, object args)
         {
-            // Calls command to make move.
-            LocalPlayer.CmdMakeMove((Coordinates)args);
+            LocalPlayer.CmdExecuteAction((ActionParameters)args);
         }
 
-        // GameView. Executed when EndTurn button is clicked.
+        // Called from GameView when EndTurn button is clicked.
         private void OnEndTurnClicked(object sender, object args)
         {
             // Calls command to end turn.

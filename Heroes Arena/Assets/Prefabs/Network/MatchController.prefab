@@ -51,8 +51,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 321f1ae6267aa1e48b6ced02e84a7db9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  localPlayer: {fileID: 0}
-  remotePlayer: {fileID: 0}
-  hostPlayer: {fileID: 0}
-  clientPlayer: {fileID: 0}
-  players: []
+  NumberOfPlayers: 1
+  NetworkManagerHud: {fileID: 0}
+  LocalPlayer: {fileID: 0}
+  Players: []

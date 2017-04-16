@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Networking;
 
 namespace HeroesArena
 {
@@ -11,7 +12,10 @@ namespace HeroesArena
 
         // TODO this should not be here probably. 
         // Number of players in game.
-        public const int NumberOfPlayers = 2;
+        public int NumberOfPlayers = 2;
+
+        // Reference to network HUD.
+        public NetworkManagerHUD NetworkManagerHud;
 
         // Checks if match is ready.
         public bool IsReady
@@ -41,7 +45,7 @@ namespace HeroesArena
             this.RemoveObserver(OnPlayerDestroyed, PlayerController.Destroyed);
         }
 
-        // PlayerController. Called when client starts.
+        // Called from PlayerController when client starts.
         void OnPlayerStarted(object sender, object args)
         {
             // Adds new player to list.
@@ -51,7 +55,7 @@ namespace HeroesArena
             Configure();
         }
 
-        // PlayerController. Called when local player connects.
+        // Called from PlayerController when local player connects.
         void OnPlayerStartedLocal(object sender, object args)
         {
             // Remembers reference for local player.
@@ -61,7 +65,7 @@ namespace HeroesArena
             Configure();
         }
 
-        // PlayerController. Called when player is destroyed.
+        // Called from PlayerController when player is destroyed.
         void OnPlayerDestroyed(object sender, object args)
         {
             // Clears local player reference if local player is destroyed.
@@ -79,7 +83,10 @@ namespace HeroesArena
         {
             // Notifies GameController that match is ready.
             if (LocalPlayer != null && Players.Count == NumberOfPlayers)
+            {
+                NetworkManagerHud.showGUI = false;
                 this.PostNotification(MatchReady);
+            }
         }
     }
 }

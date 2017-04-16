@@ -10,9 +10,12 @@ namespace HeroesArena
         public const string StartedLocal = "PlayerController.StartedLocal";
         public const string Destroyed = "PlayerController.Destroyed";
         public const string Initiative = "PlayerController.Initiative";
-        public const string RequestMakeMove = "PlayerController.RequestMakeMove";
         public const string RequestEndTurn = "PlayerController.RequestEndTurn";
-        
+        public const string RequestExecuteAction = "PlayerController.RequestExecuteAction";
+        public const string RequestMap = "PlayerController.RequestMap";
+        public const string MapCreated = "PlayerController.MapCreated";
+
+
         // Some basic properties.
         // TODO change set for name restrictions.
         public string Name;
@@ -56,7 +59,7 @@ namespace HeroesArena
             // TODO this is called initiative, but is only called for one player and no initiative is determined, should be changed.
             RpcInitiative();
         }
-        // Notifies every client about initiative. 
+        // Notifies every client about initiative.
         [ClientRpc]
         private void RpcInitiative()
         {
@@ -64,19 +67,19 @@ namespace HeroesArena
             this.PostNotification(Initiative);
         }
 
-        // Runs only on host making move.
+        // Runs only on host executing action.
         [Command]
-        public void CmdMakeMove(Coordinates pos)
+        public void CmdExecuteAction(ActionParameters param)
         {
             // Calls every client.
-            RpcMakeMove(pos);
+            RpcExecuteAction(param);
         }
-        // Notifies every client about move.
+        // Notifies every client about action.
         [ClientRpc]
-        private void RpcMakeMove(Coordinates pos)
+        private void RpcExecuteAction(ActionParameters param)
         {
-            // Notifies GameController that move is requested.
-            this.PostNotification(RequestMakeMove, pos);
+            // Notifies GameController that action is to be executed.
+            this.PostNotification(RequestExecuteAction, param);
         }
 
         // Runs only on host ending turn.
@@ -92,6 +95,19 @@ namespace HeroesArena
         {
             // Notifies GameController that turn end is requested.
             this.PostNotification(RequestEndTurn);
+        }
+
+        [Command]
+        public void CmdCreateMap(int width, int height, int minWallNum, int maxWallNum)
+        {
+            Map map = MapGenerator.Generate(width, height, minWallNum, maxWallNum);
+            RpcCreateMap(map);
+        }
+
+        [ClientRpc]
+        private void RpcCreateMap(Map map)
+        {
+            this.PostNotification(MapCreated, map);
         }
     }
 }

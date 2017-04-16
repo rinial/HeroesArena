@@ -8,12 +8,31 @@ namespace HeroesArena
         // Cell containing this object.
 	    public Cell Cell;
 
-        // Some triggers should be called from here like OnObjectUse.
+        // Type of the object.
+        public readonly ObjectType Type;
+
+        // Called upon using object.
+        public System.Action<BasicUnit> OnObjectUse;
 
         // Constructor.
-        public BasicObject(Cell cell = null)
+        public BasicObject(Cell cell = null, ObjectType type = ObjectType.HealthPotion)
         {
             Cell = cell;
+            Type = type;
+
+            // TODO this shouldnt be here. Also magic number.
+            switch (type)
+            {
+                case ObjectType.HealthPotion:
+                    OnObjectUse = unit =>
+                    {
+                        unit.Heal(10);
+                        Cell.OnCellEnter -= OnObjectUse;
+                        Cell.Object = null;
+                    };
+                    break;
+            }
+
             if(cell != null)
                 cell.Object = this;
         }
@@ -22,7 +41,7 @@ namespace HeroesArena
 	    public object Clone()
 	    {
             // We don't clone Cell to avoid recursion.
-            return new BasicObject(null);
+            return new BasicObject(null, Type);
 	    }
 
         #region Equals

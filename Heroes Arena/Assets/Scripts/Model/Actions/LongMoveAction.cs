@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace HeroesArena
 {
@@ -26,10 +27,30 @@ namespace HeroesArena
             route = map.GetRoute(map.Cells[unit.Cell.Position], map.Cells[pos], PossibleDistance);
             if (route == null)
                 return false;
-            int distance = route.Length;
-            if (distance > PossibleDistance || distance < 1)
-                return false;
             return true;
+        }
+
+        // Returns all cells in range.
+        public override List<Cell> AllInRange(Map map)
+        {
+            if (map == null || map.Cells == null || Executer == null)
+                return new List<Cell>();
+
+            BasicUnit unit = Executer as BasicUnit;
+            
+            Cell center = map.Cells[unit.Cell.Position];
+            List<Cell> cells = map.GetCellsInRange(center, PossibleDistance).Keys.ToList();
+            cells.Remove(center);
+            return cells;
+        }
+
+        // Returns selected cells for target.
+        public override List<Cell> SelectedArea(Coordinates target, Map map)
+        {
+            Route route = new Route();
+            if (!InRange(target, map, ref route))
+                return new List<Cell>();
+            return route.Cells.GetRange(1, route.Length);
         }
 
         // Returns possible distance of move.

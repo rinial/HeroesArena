@@ -18,8 +18,13 @@ public class StateMachine : MonoBehaviour
 			target = gameObject.AddComponent<T>();
 		return target;
 	}
-	
-	public virtual void ChangeState<T> () where T : State
+
+    private void Update()
+    {
+        _currentState.OnUpdate();
+    }
+
+    public virtual void ChangeState<T> () where T : State
 	{
 		CurrentState = GetState<T>();
 	}

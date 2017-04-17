@@ -8,13 +8,36 @@ namespace HeroesArena
         // Checks if position is in action range.
         public override bool InRange(Coordinates pos, Map map)
         {
-            if (map ==null || map.Cells == null || !map.Cells.ContainsKey(pos) || map.Cells[pos] == null || map.Cells[pos].Tile == null || !map.Cells[pos].Tile.Walkable)
+            if (map ==null || map.Cells == null || !map.Cells.ContainsKey(pos) || map.Cells[pos] == null || map.Cells[pos].Tile == null || !map.Cells[pos].Tile.Walkable || map.Cells[pos].Unit != null)
                 return false;
             BasicUnit unit = Executer as BasicUnit;
             int distance = unit.Cell.Position.Distance(pos);
             if (distance != 1)
                 return false;
+            if (!map.CanBeSeen(unit.Cell.Position, pos, 1))
+                return false;
             return true;
+        }
+
+        // Returns all cells in range.
+        public override List<Cell> AllInRange(Map map)
+        {
+            if (map == null || map.Cells == null || Executer == null)
+                return new List<Cell>();
+            
+            BasicUnit unit = Executer as BasicUnit;
+
+            List<Cell> cellsInRange = new List<Cell>();
+            foreach(Coordinates pos in unit.Cell.Position.GetClose())
+            {
+                if (!map.Cells.ContainsKey(pos) || map.Cells[pos].Unit != null || map.Cells[pos].Tile == null ||
+                    !map.Cells[pos].Tile.Walkable || !map.CanBeSeen(unit.Cell.Position, pos, 1))
+                    continue;
+
+                cellsInRange.Add(map.Cells[pos]);
+            }
+
+            return cellsInRange;
         }
 
         // Move execution.

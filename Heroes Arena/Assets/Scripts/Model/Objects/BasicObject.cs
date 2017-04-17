@@ -26,9 +26,12 @@ namespace HeroesArena
                 case ObjectType.HealthPotion:
                     OnObjectUse = unit =>
                     {
-                        unit.Heal(10);
-                        Cell.OnCellEnter -= OnObjectUse;
-                        Cell.Object = null;
+                        if (unit != null)
+                        {
+                            unit.Heal(10);
+                            Cell.OnCellEnter -= OnObjectUse;
+                            Cell.Object = null;
+                        }
                     };
                     break;
             }

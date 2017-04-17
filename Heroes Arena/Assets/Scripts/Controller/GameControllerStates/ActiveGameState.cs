@@ -1,4 +1,5 @@
-﻿using UnityEngine.UI;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
 namespace HeroesArena
 {
@@ -18,6 +19,17 @@ namespace HeroesArena
             RefreshPlayerLabels();
             // Sets chosen click action to move. Shows action highlight.
             GameView.OnMoveClick();
+        }
+
+        public override void OnUpdate()
+        {
+            base.OnUpdate();
+
+            // Shows highlight where mouse points.
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Coordinates coords = GameView.WorldToCoordinates(mousePos);
+            GameView.ShowMouseHighlight(coords);
+            GameView.ShowSelectedAreaHighlights(coords);
         }
 
         // Executed when leaving this state.

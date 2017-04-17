@@ -10,7 +10,6 @@ namespace HeroesArena
         public GameModel GameModel = new GameModel();
         public GameView GameView;
         public MatchController MatchController;
-        public PlayerController PlayerController;
 
         // Observes some notifications from MatchController, GameModel and PlayerController.
         private void OnEnable()
@@ -20,10 +19,10 @@ namespace HeroesArena
             this.AddObserver(OnDidExecuteAction, GameModel.DidExecuteActionNotification);
             this.AddObserver(OnDidChangeControl, GameModel.DidChangeControlNotification);
             this.AddObserver(OnDidEndGame, GameModel.DidEndGameNotification);
-            this.AddObserver(OnDidRequestMap, GameModel.DidRequestMap);
             this.AddObserver(OnInitiative, PlayerController.Initiative);
             this.AddObserver(OnRequestExecuteAction, PlayerController.RequestExecuteAction);
             this.AddObserver(OnRequestEndTurn, PlayerController.RequestEndTurn);
+            this.AddObserver(OnRequestMap, GameModel.RequestMap);
             this.AddObserver(OnMapCreated, PlayerController.MapCreated);
         }
 
@@ -38,7 +37,7 @@ namespace HeroesArena
             this.RemoveObserver(OnInitiative, PlayerController.Initiative);
             this.RemoveObserver(OnRequestExecuteAction, PlayerController.RequestExecuteAction);
             this.RemoveObserver(OnRequestEndTurn, PlayerController.RequestEndTurn);
-            this.RemoveObserver(OnDidRequestMap, GameModel.DidRequestMap);
+            this.RemoveObserver(OnRequestMap, GameModel.RequestMap);
             this.RemoveObserver(OnMapCreated, PlayerController.MapCreated);
         }
 
@@ -57,16 +56,18 @@ namespace HeroesArena
                 Invoke("StartGame", 1f);
         }
 
-        void OnDidRequestMap(object sender, object args)
+        // Called from GameModel when new map is needed.
+        void OnRequestMap(object sender, object args)
         {
             // arguments: width, height, number of rand. walls
             var intArgs = args as int[];
             if (MatchController.LocalPlayer.isServer)
-                PlayerController.CmdCreateMap(intArgs[0], intArgs[1], intArgs[2], intArgs[2]);
+                MatchController.LocalPlayer.CmdCreateMap(intArgs[0], intArgs[1], intArgs[2], intArgs[3], intArgs[3], intArgs[4], intArgs[4]);
         }
-
+        // Calles from PlayerController when map is created.
         void OnMapCreated(object sender, object args)
         {
+            // continues game reset with new map
             GameModel.ContinueReset(args as Map);
         }
 
@@ -94,9 +95,7 @@ namespace HeroesArena
         // Called from GameModel when action is executed.
         void OnDidExecuteAction(object sender, object args)
         {
-            // Shows new map after the action execution.
-            // TODO it should only show visible part of map for player.
-            GameView.Show(GameModel.Map);
+            GameView.Show(new Map(GameModel.Map.GetVisibleCells(MatchController.LocalPlayer.ControlledUnit.Cell)));
         }
 
         // Called from PlayerController when turn end is requested.
@@ -109,9 +108,7 @@ namespace HeroesArena
         // Called from GameModel when game starts.
         void OnDidBeginGame(object sender, object args)
         {
-            // Draws the whole map.
-            // TODO it should only show visible part of map for player.
-            GameView.Show(GameModel.Map);
+            GameView.Show(new Map(GameModel.Map.GetVisibleCells(MatchController.LocalPlayer.ControlledUnit.Cell)));
 
             // Checks state.
             CheckState();
@@ -120,9 +117,7 @@ namespace HeroesArena
         // Called from GameModel when controlling player is changed.
         void OnDidChangeControl(object sender, object args)
         {
-            // Draws the whole map.
-            // TODO it should only show visible part of map for player.
-            GameView.Show(GameModel.Map);
+            GameView.Show(new Map(GameModel.Map.GetVisibleCells(MatchController.LocalPlayer.ControlledUnit.Cell)));
 
             // Checks state.
             CheckState();

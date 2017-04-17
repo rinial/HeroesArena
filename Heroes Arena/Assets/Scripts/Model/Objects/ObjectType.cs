@@ -2,6 +2,7 @@
 {
     public enum ObjectType
     {
+        None,
         HealthPotion
     }
 }

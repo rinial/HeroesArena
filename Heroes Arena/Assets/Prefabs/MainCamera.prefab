@@ -52,7 +52,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.14117648, g: 0.14117648, b: 0.14117648, a: 0}
+  m_BackGroundColor: {r: 0.19669119, g: 0.25, b: 0.22573529, a: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -106,7 +106,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1735073086279498}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d6abf1a1dbed484b988b42712c9bf0f, type: 3}
+  m_Script: {fileID: 11500000, guid: cac4b2c478bdd7949ab4797c648c952b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Target: {fileID: 0}

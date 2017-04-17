@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace HeroesArena
+﻿namespace HeroesArena
 {
     // Represents parameters for one action.
     public class ActionParameters

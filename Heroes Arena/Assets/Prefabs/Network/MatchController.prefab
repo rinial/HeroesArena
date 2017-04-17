@@ -48,10 +48,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1152417469233522}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 321f1ae6267aa1e48b6ced02e84a7db9, type: 3}
+  m_Script: {fileID: 11500000, guid: 40537cab993496240acce41a13c63411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NumberOfPlayers: 1
+  NumberOfPlayers: 2
   NetworkManagerHud: {fileID: 0}
   LocalPlayer: {fileID: 0}
   Players: []

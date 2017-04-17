@@ -38,7 +38,12 @@ namespace HeroesArena
                 case ClassTag.Rogue:
                     clas = new Rogue(unit);
                     break;
-                // TODO
+                case ClassTag.Wizard:
+                    clas = new Wizard(unit);
+                    break;
+                case ClassTag.Warrior:
+                    clas = new Warrior(unit);
+                    break;
                 default:
                     clas = null;
                     break;

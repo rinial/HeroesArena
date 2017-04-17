@@ -11,6 +11,11 @@ namespace HeroesArena
         public Cell Cell;
         // Direction where unit is looking.
         public Direction Facing { get; private set; }
+        // True, if unit is alive, false otherwise.
+        public bool IsAlive {
+            get { return Class.HealthPoints.Current > 0; }
+        }
+
         // Unit's health points.
         public Parameter<int> HealthPoints
         {
@@ -23,6 +28,7 @@ namespace HeroesArena
             get { return Class.ActionPoints; }
             set { Class.ActionPoints = value; }
         }
+
         // Unit's class.
         public Class Class { get; private set; }
         // Stores unit's actions while providing convinient access to them.
@@ -61,11 +67,13 @@ namespace HeroesArena
         {
             target.TakeDamage(this, damage);
         }
+
         // Takes damage from source.
         public void TakeDamage(IDamageDealer source, Damage damage)
         {
             HealthPoints.Current -= damage.Amount;
         }
+
         // Gets healed.
         public void Heal(int amount)
         {
@@ -93,12 +101,10 @@ namespace HeroesArena
             Facing = facing;
 
             Class = Class.GetNewClass(clas, this);
-
-            // TODO magic number
-            // Every unit has move action.
-            MoveAction basicMove = new MoveAction(this, 3);
-            AddAction(basicMove);
-            AddAction(new LongMoveAction(basicMove));
+            foreach (Action action in Class.Actions.Values)
+            {
+                AddAction(action);
+            }
         }
 
         // For cloning.

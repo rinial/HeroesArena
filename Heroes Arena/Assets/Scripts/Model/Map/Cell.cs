@@ -70,7 +70,7 @@ namespace HeroesArena
         #endregion
 
         #region Constructors
-        // Constructors. Every cell MUST have assigned position and tile.
+        // Constructors.
         public Cell(BasicTile tile, BasicUnit unit = null, BasicObject obj = null)
         {
             Position = new Coordinates();
@@ -96,6 +96,12 @@ namespace HeroesArena
                 cell.Object.Cell = cell;
 
             return cell;
+        }
+
+        // Returns true is the cell is occupied, false otherwise.
+        public bool IsOccupied
+        {
+            get { return !(Tile.Walkable && Object == null && Unit == null); }
         }
 
         #region Equals

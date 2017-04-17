@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine;
 using UnityEngine.Networking;
+using Random = UnityEngine.Random;
 
 namespace HeroesArena
 {
@@ -11,22 +13,32 @@ namespace HeroesArena
         // TODO extract mapsize
         public const int MapSize = 10;
         public const int NumWalls = 10;
+        public const int NumPotions = 5;
 
         // Notifications.
         public const string DidBeginGameNotification = "GameModel.DidBeginGameNotification";
         public const string DidExecuteActionNotification = "GameModel.DidExecuteActionNotification";
         public const string DidChangeControlNotification = "GameModel.DidChangeControlNotification";
         public const string DidEndGameNotification = "GameModel.DidEndGameNotification";
-        public const string DidRequestMap = "GameModel.DidRequestMap";
+        public const string RequestMap = "GameModel.RequestMap";
+        public const string DidKillPlayer = "GameModel.DidKillPlayer";
 
         // Stores players and provides easy id-player access.
         private Dictionary<NetworkInstanceId, PlayerController> _players;
+        // returns the number of players currently alive in game
+        private int playersAlive;
         // Order of players.
-        private Queue<NetworkInstanceId> _turnOrder;
+        private List<NetworkInstanceId> _turnOrder;
+        private int controlIndex;
         // Stores map.
         public Map Map { get; private set; }
         // ID of the player who is currently in control.
-        public NetworkInstanceId Control { get; private set; }
+        public NetworkInstanceId Control {
+            get {
+                return _turnOrder[controlIndex];
+            }
+        }
+
         // TODO change to make TDM instead of FFA.
         // ID of the player who won.
         public NetworkInstanceId Winner { get; private set; }
@@ -71,13 +83,17 @@ namespace HeroesArena
         // Changes turn.
         public void ChangeTurn()
         {
-            // Moves current controling player to the end of turn order.
-            _turnOrder.Enqueue(_turnOrder.Dequeue());
-            Control = _turnOrder.Peek();
+            IncrementTurnIndex();
             _players[Control].ControlledUnit.TurnStart();
 
             // Notifies GameController that turn was changed.
             this.PostNotification(DidChangeControlNotification);
+        }
+
+        private void IncrementTurnIndex() {
+            controlIndex++;
+            if (controlIndex >= _turnOrder.Count)
+                controlIndex = 0;
         }
 
         // Resets and starts the game.
@@ -88,18 +104,33 @@ namespace HeroesArena
             SetTurnOrder();
 
             // Notifies GameController that map is needed.
-            var args = new int[] {MapSize, MapSize, NumWalls};
-            this.PostNotification(DidRequestMap, args);
+            var args = new int[] {players.Count, MapSize, MapSize, NumWalls, NumPotions};
+            this.PostNotification(RequestMap, args);
         }
 
+        // Continues game reset with new map.
         public void ContinueReset(Map map)
         {
             Map = map;
-            CreateObjects();
-            CreateAndAssignUnits();
+            AssignUnits();
 
             // Notifies GameController that game is begun.
             this.PostNotification(DidBeginGameNotification);
+        }
+
+        // Assigns units for players.
+        public void AssignUnits()
+        {
+            // TODO names are not supposed to be here.
+            string[] names = { "Arngrim", "Bjorn", "Einherjar", "Guomundr", "Hrothgar", "Ingvar", "Jonark", "Kjarr", "Niohad", "Orvar", "Palnatoke", "Ragnar", "Sigmund", "Volsung", "Weohstan", "Yrsa" };
+
+            List<NetworkInstanceId> players = _players.Keys.ToList();
+            List<BasicUnit> units = Map.GetUnits();
+            for (int i = 0; i < players.Count; ++i)
+            {
+                _players[players[i]].AssignUnit(units[i]);
+                _players[players[i]].Name = names[Random.Range(0, names.Length)];
+            }
         }
 
         // Clears old players and sets new.
@@ -108,6 +139,7 @@ namespace HeroesArena
             _players.Clear();
             foreach (PlayerController player in players)
                 _players[player.netId] = player;
+            playersAlive = _players.Count;
         }
 
         // Clears old turn order and sets new.
@@ -118,45 +150,20 @@ namespace HeroesArena
             _turnOrder.Clear();
             foreach (NetworkInstanceId id in _players.Keys)
             {
-                _turnOrder.Enqueue(id);
+                _turnOrder.Add(id);
             }
-            Control = _turnOrder.Peek();
+            // TODO order should depend on initiatives
+            controlIndex = 0;
         }
 
-        // Clears old map and creates new.
-        public void CreateMap()
+        // Sets a player as killed removing him from the player queue.
+        public void KillPlayer(NetworkInstanceId playerId)
         {
-            // generate a randomized map using the MapGenerator class
-            Map = MapGenerator.Generate(MapSize, NumWalls);
-        }
+            playersAlive--;
+            _turnOrder.Remove(playerId);
 
-        // Creates objects on the map.
-        public void CreateObjects()
-        {
-            new BasicObject(Map.Cells[new Coordinates(2, 3)]);
-        }
-
-        // TODO this should be totally reworked.
-        // Creates and assigns units for players.
-        public void CreateAndAssignUnits()
-        {
-            // TODO names are not supposed to be here.
-            string[] names = { "Arngrim", "Bjorn", "Einherjar", "Guomundr", "Hrothgar", "Ingvar", "Jonark", "Kjarr", "Niohad", "Orvar", "Palnatoke", "Ragnar", "Sigmund", "Volsung", "Weohstan", "Yrsa" };
-
-            List<NetworkInstanceId> players = _players.Keys.ToList();
-            List<Cell> cells = Map.Cells.Values.ToList();
-            int j = 0;
-            for (int i = 0; i < players.Count; ++i)
-            {
-                // TODO units are not supposed to be created this way.
-                while (!(cells[j].Tile.Walkable && cells[j].Unit == null))
-                    ++j;
-
-                BasicUnit unit = new BasicUnit(cells[j], Direction.Down, ClassTag.Rogue);
-
-                _players[players[i]].AssignUnit(unit);
-                _players[players[i]].Name = names[Random.Range(0, names.Length)];
-            }
+           // Notifies GameController that a player has been removed.
+            this.PostNotification(DidKillPlayer);
         }
 
         // Checks if game is ended.
@@ -170,7 +177,7 @@ namespace HeroesArena
         public GameModel()
         {
             _players = new Dictionary<NetworkInstanceId, PlayerController>();
-            _turnOrder = new Queue<NetworkInstanceId>();
+            _turnOrder = new List<NetworkInstanceId>();
         }
     }
 }

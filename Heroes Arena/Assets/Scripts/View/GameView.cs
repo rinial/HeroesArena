@@ -27,7 +27,7 @@ namespace HeroesArena
         public GameObject Units;
         public GameObject Grid;
         public GameObject ActionHighlights;
-        public GameObject RouteHighlights;
+        public GameObject SelectedAreaHighlights;
         public GameObject MouseHighlight;
         public Text LocalPlayerLabel;
         public Text GameStateLabel;
@@ -53,14 +53,16 @@ namespace HeroesArena
         private GameObject RedGround1;
         [SerializeField]
         private GameObject RedGround2;
-
-
         [SerializeField]
         private GameObject WallLow;
         [SerializeField]
         private GameObject Wall;
         [SerializeField]
         private GameObject Rogue;
+        [SerializeField]
+        private GameObject Warrior;
+        [SerializeField]
+        private GameObject Wizard;
         [SerializeField]
         private GameObject HealthPotion;
         [SerializeField]
@@ -69,6 +71,8 @@ namespace HeroesArena
 
         // Stores gameobject references and provides easy position-gameobjects access.
         private Dictionary<Coordinates, List<GameObject>> _shownCells;
+        // Stores gameobject references and provides easy position-gameobjects access for cells in FOW.
+        private Dictionary<Coordinates, List<GameObject>> _shownFOWCells;
         // Stores old map
         private Map _oldMap;
         // Checks if grid should be shown.
@@ -82,22 +86,13 @@ namespace HeroesArena
         private void OnEnable()
         {
             _shownCells = new Dictionary<Coordinates, List<GameObject>>();
+            _shownFOWCells = new Dictionary<Coordinates, List<GameObject>>();
         }
 
         // Executed at every frame.
         private void Update()
         {
-            // Shows highlight where mouse points.
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Coordinates coords = WorldToCoordinates(mousePos);
-            if (_shownCells.ContainsKey(coords))
-            {
-                MouseHighlight.SetActive(true);
-                SetOnGrid(MouseHighlight, coords);
-                ShowRouteHighlights(coords);
-            }
-            else
-                MouseHighlight.SetActive(false);
+
         }
 
         #region Show/Clear Map
@@ -116,7 +111,7 @@ namespace HeroesArena
             // Shows unit on the cell.
             if (cell.Unit != null)
             {
-                GameObject unit = ShowOnGrid(Rogue, Units, cell);
+                GameObject unit = ShowOnGrid(GetUnitPrefab(cell.Unit.Class.Tag), Units, cell);
                 gameObjects.Add(unit);
 
                 // Updates unit animation.
@@ -166,6 +161,14 @@ namespace HeroesArena
                 // Shows cell if nothing is shown at the position.
                 if (!_shownCells.ContainsKey(cell.Position))
                 {
+                    if (_shownFOWCells.ContainsKey(cell.Position))
+                    {
+                        foreach (GameObject obj in _shownFOWCells[cell.Position])
+                        {
+                            Destroy(obj);
+                        }
+                        _shownFOWCells.Remove(cell.Position);
+                    }
                     Show(cell);
                 }
             }
@@ -181,20 +184,33 @@ namespace HeroesArena
             {
                 // Remembers coordinates to clear later.
                 List<Coordinates> keysToDelete = new List<Coordinates>();
+                List<Coordinates> keysToTurnFOW = new List<Coordinates>();
                 foreach (Coordinates pos in _shownCells.Keys)
                 {
                     // Clears gameObjects for position if it is not part of new map or if it differs from new map.
-                    if (!map.Cells.ContainsKey(pos) || !_oldMap.Cells[pos].Equals(map.Cells[pos]))
-                    {
-                        foreach (GameObject obj in _shownCells[pos])
-                            Destroy(obj);
+                    if (!map.Cells.ContainsKey(pos))
+                        keysToTurnFOW.Add(pos);
+                    else if (!_oldMap.Cells[pos].Equals(map.Cells[pos]))
                         keysToDelete.Add(pos);
-                    }
                 }
                 // Clears the unneeded coordinates from shownCells.
-                foreach (Coordinates coords in keysToDelete)
+                foreach (Coordinates pos in keysToDelete)
                 {
-                    _shownCells.Remove(coords);
+                    foreach (GameObject obj in _shownCells[pos])
+                        Destroy(obj);
+                    _shownCells.Remove(pos);
+                }
+                foreach (Coordinates pos in keysToTurnFOW)
+                {
+                    _shownFOWCells[pos] = _shownCells[pos];
+                    _shownCells.Remove(pos);
+                    foreach (GameObject obj in _shownFOWCells[pos])
+                    {
+                        if (obj.CompareTag("Unit") || obj.CompareTag("Object"))
+                            Destroy(obj);
+                        else
+                            obj.GetComponent<SpriteRenderer>().color = new Color(0.3f, 0.3f, 0.3f);
+                    }
                 }
             }
         }
@@ -213,6 +229,17 @@ namespace HeroesArena
         }
         #endregion
 
+        public void ShowMouseHighlight(Coordinates target)
+        {
+            if (_shownCells.ContainsKey(target))
+            {
+                MouseHighlight.SetActive(true);
+                SetOnGrid(MouseHighlight, target);
+            }
+            else
+                MouseHighlight.SetActive(false);
+        }
+
         #region Show/Clear Grid
         // Shows one grid cell.
         public void ShowGridCell(Coordinates pos)
@@ -225,6 +252,8 @@ namespace HeroesArena
             ClearGrid();
             _showGrid = true;
             foreach (Coordinates pos in _shownCells.Keys)
+                ShowGridCell(pos);
+            foreach (Coordinates pos in _shownFOWCells.Keys)
                 ShowGridCell(pos);
         }
         // Hides grid.
@@ -240,39 +269,27 @@ namespace HeroesArena
         }
         #endregion
 
-        #region Show/Clear Route Highlights
-        // Shows one route highlight cell.
-        public void ShowRouteHighlightCell(Coordinates pos)
+        #region Show/Clear Selected Area Highlights
+        // Shows one selected area highlight cell.
+        public void ShowSelectedAreaHighlightCell(Coordinates pos)
         {
-            ShowOnGrid(ActionHighlight, RouteHighlights, pos);
+            ShowOnGrid(ActionHighlight, SelectedAreaHighlights, pos);
         }
-        // Clears and then shows route highlights.
-        public void ShowRouteHighlights(Coordinates target)
+        // Clears and then shows selected area highlights.
+        public void ShowSelectedAreaHighlights(Coordinates target)
         {
-            ClearRouteHighlights();
+            MouseHighlight.SetActive(true);
+            ClearSelectedAreaHighlights();
             Action action = MatchController.LocalPlayer.ControlledUnit.Actions[_clickAction];
-            if (action == null || !_oldMap.Cells.ContainsKey(target))
-                return;
-            if (action.Tag == ActionTag.LongMove)
+            foreach (Cell cell in action.SelectedArea(target, _oldMap))
             {
-                LongMoveAction longMove = (LongMoveAction)action;
-                int distance = longMove.PossibleDistance;
-                Cell center = _oldMap.Cells[MatchController.LocalPlayer.ControlledUnit.Cell.Position];
-                Route route = _oldMap.GetRoute(center, _oldMap.Cells[target], distance);
-                if (route == null)
-                    return;
-                List<Cell> cells = route.Cells;
-                foreach (Cell cell in cells)
-                {
-                    if (cell != center)
-                        ShowRouteHighlightCell(cell.Position);
-                }
+                ShowSelectedAreaHighlightCell(cell.Position);
             }
         }
-        // Clears action highlights.
-        public void ClearRouteHighlights()
+        // Clears selected area highlights.
+        public void ClearSelectedAreaHighlights()
         {
-            DestroyAllChildren(RouteHighlights);
+            DestroyAllChildren(SelectedAreaHighlights);
         }
         #endregion
 
@@ -290,23 +307,10 @@ namespace HeroesArena
             Action action = MatchController.LocalPlayer.ControlledUnit.Actions[_clickAction];
             if (action == null)
                 return;
-            if (action.Tag != ActionTag.LongMove)
-                foreach (Coordinates pos in _shownCells.Keys)
-                {
-                    if (action.InRange(pos, _oldMap))
-                        ShowActionHighlightCell(pos);
-                }
-            else
+            List<Cell> cells = action.AllInRange(_oldMap);
+            foreach (Cell cell in cells)
             {
-                LongMoveAction longMove = (LongMoveAction) action;
-                int distance = longMove.PossibleDistance;
-                Cell center = _oldMap.Cells[MatchController.LocalPlayer.ControlledUnit.Cell.Position];
-                List<Cell> cells = _oldMap.GetCellsInRange(center, distance).Keys.ToList();
-                foreach (Cell cell in cells)
-                {
-                    if (cell != center)
-                        ShowActionHighlightCell(cell.Position);
-                }
+                ShowActionHighlightCell(cell.Position);
             }
         }
         // Hides action highlights.
@@ -452,7 +456,7 @@ namespace HeroesArena
             }
         }
 
-        // Returns a corresponding prefab.
+        // Returns a corresponding tile prefab.
         public GameObject GetTilePrefab(TileType type)
         {
             // TODO rewrite the whole tile system
@@ -475,6 +479,22 @@ namespace HeroesArena
             }
 
             return null;
+        }
+
+        // Returns a corresponding unit prefab.
+        public GameObject GetUnitPrefab(ClassTag clas)
+        {
+            switch (clas)
+            {
+                case ClassTag.Rogue:
+                    return Rogue;
+                case ClassTag.Wizard:
+                    return Wizard;
+                case ClassTag.Warrior:
+                    return Warrior;
+                default:
+                    return Rogue;
+            }
         }
 
         #region Destroy Children

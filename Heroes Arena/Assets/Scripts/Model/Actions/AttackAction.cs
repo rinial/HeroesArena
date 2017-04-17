@@ -15,13 +15,29 @@ namespace HeroesArena
         // Checks if position is in action range.
         public override bool InRange(Coordinates pos, Map map)
         {
-            if (map == null || map.Cells == null || !map.Cells.ContainsKey(pos))
+            if (map == null || map.Cells == null || !map.Cells.ContainsKey(pos) || map.Cells[pos] == null || map.Cells[pos].Tile == null || !map.Cells[pos].Tile.Walkable)
                 return false;
             BasicUnit unit = Executer as BasicUnit;
             int distance = unit.Cell.Position.Distance(pos);
             if (distance > MaxRange || distance < MinRange)
                 return false;
+            if (!map.CanBeSeen(unit.Cell.Position, pos, MaxRange))
+                return false;
             return true;
+        }
+
+        // Returns all cells in range.
+        public override List<Cell> AllInRange(Map map)
+        {
+            if (map == null || map.Cells == null || Executer == null)
+                return new List<Cell>();
+
+            BasicUnit unit = Executer as BasicUnit;
+
+            Cell center = map.Cells[unit.Cell.Position];
+            List<Cell> cells = map.GetVisibleCells(center, MaxRange);
+            cells.Remove(center);
+            return cells;
         }
 
         // Attack execution.
@@ -49,7 +65,7 @@ namespace HeroesArena
             IDamageable target = cell.Unit;
             if (target == null)
                 return false;
-            
+
             BasicUnit unit = Executer as BasicUnit;
 
             // If cell is not in range.
@@ -61,7 +77,7 @@ namespace HeroesArena
                 return false;
 
             unit.UpdateFacing(cell);
-            
+
             unit.DealDamage(target, Damage);
 
             return true;

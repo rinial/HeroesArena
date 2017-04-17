@@ -1,4 +1,5 @@
-﻿using UnityEngine.Networking;
+﻿using System.Diagnostics;
+using UnityEngine.Networking;
 
 namespace HeroesArena
 {
@@ -14,7 +15,6 @@ namespace HeroesArena
         public const string RequestExecuteAction = "PlayerController.RequestExecuteAction";
         public const string RequestMap = "PlayerController.RequestMap";
         public const string MapCreated = "PlayerController.MapCreated";
-
 
         // Some basic properties.
         // TODO change set for name restrictions.
@@ -89,6 +89,7 @@ namespace HeroesArena
             // Calls every client.
             RpcEndTurn();
         }
+
         // Notifies every client about turn end.
         [ClientRpc]
         private void RpcEndTurn()
@@ -97,17 +98,20 @@ namespace HeroesArena
             this.PostNotification(RequestEndTurn);
         }
 
+        // Runs only on host creating map.
         [Command]
-        public void CmdCreateMap(int width, int height, int minWallNum, int maxWallNum)
+        public void CmdCreateMap(int unitNum, int width, int height, int minWallNum, int maxWallNum, int minPotionNum, int maxPotionNum)
         {
-            Map map = MapGenerator.Generate(width, height, minWallNum, maxWallNum);
-            RpcCreateMap(map);
+            MapParameters mapParam = MapGenerator.Generate(unitNum, width, height, minWallNum, maxWallNum, minPotionNum, maxPotionNum);
+            // Calls every client.
+            RpcCreateMap(mapParam);
         }
-
+        // Notifies every client about map creation.
         [ClientRpc]
-        private void RpcCreateMap(Map map)
+        private void RpcCreateMap(MapParameters mapParam)
         {
-            this.PostNotification(MapCreated, map);
+            // Notifies GameController that map is created.
+            this.PostNotification(MapCreated, new Map(mapParam));
         }
     }
 }

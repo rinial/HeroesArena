@@ -7,19 +7,23 @@ namespace HeroesArena
     public class BasicTile : ICloneable
     {
         public readonly TileType Type;
-        public readonly bool Walkable;
 
-        // Constructor.
-        public BasicTile(TileType type, bool walkable = true)
+        public bool Walkable { get { return Type != TileType.Wall && Type != TileType.WallLow; } }
+
+        // Constructors.
+        public BasicTile()
+        {
+            Type = TileType.Ground;
+        }
+        public BasicTile(TileType type)
         {
             Type = type;
-            Walkable = walkable;
         }
 
         // For cloning.
         public object Clone()
         {
-            return new BasicTile(Type, Walkable);
+            return new BasicTile(Type);
         }
 
         #region Equals
@@ -38,7 +42,7 @@ namespace HeroesArena
                 return false;
             }
 
-            return Type.Equals(tile.Type) && Walkable.Equals(tile.Walkable);
+            return Type.Equals(tile.Type);
         }
 
         // For performance.
@@ -49,13 +53,13 @@ namespace HeroesArena
                 return false;
             }
 
-            return Type.Equals(tile.Type) && Walkable.Equals(tile.Walkable);
+            return Type.Equals(tile.Type);
         }
 
         // For Equals.
         public override int GetHashCode()
         {
-            return Type.GetHashCode() ^ Walkable.GetHashCode();
+            return Type.GetHashCode();
         }
         #endregion
     }

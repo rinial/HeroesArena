@@ -48,10 +48,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1099344800073148}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f61746f7a15116409bfa7bca740f4ed, type: 3}
+  m_Script: {fileID: 11500000, guid: b54ab3e2636a82a469c73235b0bc4094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   GameView: {fileID: 0}
   MatchController: {fileID: 0}
-  LocalPlayerLabel: {fileID: 0}
-  GameStateLabel: {fileID: 0}
+  PlayerController: {fileID: 0}

@@ -10,7 +10,13 @@
 
             // Updates UI elements.
             GameStateLabel.text = "State: Waiting For Players";
-            LocalPlayerLabel.text = "Player: -";
+            LocalPlayerLabel.text = "Player: " + FindObjectOfType<MainMenu>().PlayerName;
+
+            EndTurnButton.gameObject.SetActive(false);
+            MoveButton.gameObject.SetActive(false);
+            AttackButton.gameObject.SetActive(false);
+            HideGridButton.gameObject.SetActive(false);
+            BottomPanel.SetActive(false);
         }
 
         // Executed when leaving this state.
@@ -19,7 +25,11 @@
             base.Exit();
 
             // Updates UI elements.
-            RefreshPlayerLabels();
+            EndTurnButton.gameObject.SetActive(true);
+            MoveButton.gameObject.SetActive(true);
+            AttackButton.gameObject.SetActive(true);
+            HideGridButton.gameObject.SetActive(true);
+            BottomPanel.SetActive(true);
         }
     }
 }

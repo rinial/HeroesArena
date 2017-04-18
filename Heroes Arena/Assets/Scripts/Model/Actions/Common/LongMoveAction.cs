@@ -90,8 +90,15 @@ namespace HeroesArena
             if (route == null)
                 return false;
 
+            BasicUnit unit = Executer as BasicUnit;;
+
             for (int i = 1; i < route.Length + 1; ++i)
-                BasicMove.Execute(route.Cells[i], map);
+            {
+                if (unit.IsAlive)
+                    BasicMove.Execute(route.Cells[i], map);
+                else
+                    break;
+            }
 
             return true;
         }

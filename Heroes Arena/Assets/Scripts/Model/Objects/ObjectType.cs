@@ -3,6 +3,8 @@
     public enum ObjectType
     {
         None,
-        HealthPotion
+        HealthPotion,
+        Spikes,
+        Corpse
     }
 }

@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using UnityEngine;
 
 namespace HeroesArena
 {
     // Represents one generiс unit in game logic.
     public class BasicUnit : ICloneable, IExecuter, IDamageDealer, IDamageable
     {
+        // Events on unit's death
+        public const string PlayerDied = "BasicUnit.PlayerDied";
+
         // Cell containing this unit.
         public Cell Cell;
         // Direction where unit is looking.
         public Direction Facing { get; private set; }
         // True, if unit is alive, false otherwise.
         public bool IsAlive {
-            get { return Class.HealthPoints.Current > 0; }
+            get { return HealthPoints.Current > 0; }
         }
 
         // Unit's health points.
@@ -72,6 +76,18 @@ namespace HeroesArena
         public void TakeDamage(IDamageDealer source, Damage damage)
         {
             HealthPoints.Current -= damage.Amount;
+            CheckDeath();
+        }
+
+        // Checks if the unit is alive, otherwise posts to the game model
+        private void CheckDeath()
+        {
+            if (!IsAlive)
+            {
+                Cell.Unit = null;
+                new BasicObject(Cell, ObjectType.Corpse);
+                this.PostNotification(PlayerDied, this);
+            }
         }
 
         // Gets healed.

@@ -12,6 +12,7 @@ namespace HeroesArena
         private int _basicAttackCost = 4;
         private Damage _basicAttackDamage = new Damage(4);
         private int _basicAttackMaxRange = 5;
+        private int _basicTeleportCost = 8;
 
         // Constructor.
         public Wizard(BasicUnit unit) : base(unit)
@@ -20,11 +21,15 @@ namespace HeroesArena
             HealthPoints = _healthPoints;
             ActionPoints = _actionPoints;
 
+            // basic actions
             AddAction(new AttackAction(Unit, _basicAttackCost, _basicAttackDamage, _basicAttackMaxRange));
 
             MoveAction basicMove = new MoveAction(Unit, _basicMoveCost);
             AddAction(basicMove);
             AddAction(new LongMoveAction(basicMove));
+
+            // class specific actions
+            AddAction(new TeleportAction(Unit, _basicTeleportCost));
         }
     }
 }

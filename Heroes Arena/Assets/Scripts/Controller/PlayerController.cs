@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace HeroesArena
@@ -11,6 +12,8 @@ namespace HeroesArena
         public const string StartedLocal = "PlayerController.StartedLocal";
         public const string Destroyed = "PlayerController.Destroyed";
         public const string Initiative = "PlayerController.Initiative";
+        public const string SetName = "PlayerController.SetName";
+        public const string Restart = "PlayerController.Restart";
         public const string RequestEndTurn = "PlayerController.RequestEndTurn";
         public const string RequestExecuteAction = "PlayerController.RequestExecuteAction";
         public const string RequestMap = "PlayerController.RequestMap";
@@ -18,7 +21,7 @@ namespace HeroesArena
 
         // Some basic properties.
         // TODO change set for name restrictions.
-        public string Name;
+        public string Name = "";
         public BasicUnit ControlledUnit { get; private set; }
 
         // Assigns controlled unit.
@@ -46,7 +49,7 @@ namespace HeroesArena
         }
 
         // Executed when player is destroyed.
-        void OnDestroy()
+        private void OnDestroy()
         {
             // Notifies MatchController that player is destroyed.
             this.PostNotification(Destroyed);
@@ -65,6 +68,35 @@ namespace HeroesArena
         {
             // Notifies GameController that initiative is determined.
             this.PostNotification(Initiative);
+        }
+
+        [Command]
+        public void CmdSetName(NetworkInstanceId id, string name)
+        {
+            RpcSetName(id, name);
+        }
+
+        [ClientRpc]
+        private void RpcSetName(NetworkInstanceId id, string name)
+        {
+            object[] args = new object[2];
+            args[0] = id;
+            args[1] = name;
+            this.PostNotification(SetName, args);
+        }
+
+        // Runs only on host determining initiative.
+        [Command]
+        public void CmdRestart()
+        {
+            RpcRestart();
+        }
+        // Notifies every client about restart.
+        [ClientRpc]
+        private void RpcRestart()
+        {
+            // Notifies GameController that restart is started.
+            this.PostNotification(Restart);
         }
 
         // Runs only on host executing action.
@@ -100,9 +132,9 @@ namespace HeroesArena
 
         // Runs only on host creating map.
         [Command]
-        public void CmdCreateMap(int unitNum, int width, int height, int minWallNum, int maxWallNum, int minPotionNum, int maxPotionNum)
+        public void CmdCreateMap(int unitNum, int width, int height, int minWallNum, int maxWallNum, int minObjectNum, int maxObjectNum)
         {
-            MapParameters mapParam = MapGenerator.Generate(unitNum, width, height, minWallNum, maxWallNum, minPotionNum, maxPotionNum);
+            MapParameters mapParam = MapGenerator.Generate(unitNum, width, height, minWallNum, maxWallNum, minObjectNum, maxObjectNum);
             // Calls every client.
             RpcCreateMap(mapParam);
         }

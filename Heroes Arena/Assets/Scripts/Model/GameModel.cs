@@ -13,7 +13,7 @@ namespace HeroesArena
         // TODO extract mapsize
         public const int MapSize = 10;
         public const int NumWalls = 10;
-        public const int NumPotions = 5;
+        public const int NumObjects = 10;
 
         // Notifications.
         public const string DidBeginGameNotification = "GameModel.DidBeginGameNotification";
@@ -26,15 +26,24 @@ namespace HeroesArena
         // Stores players and provides easy id-player access.
         private Dictionary<NetworkInstanceId, PlayerController> _players;
         // returns the number of players currently alive in game
-        private int playersAlive;
+        private int playersAlive
+        {
+            get
+            {
+                return _turnOrder.Count;
+            }
+        }
+
         // Order of players.
         private List<NetworkInstanceId> _turnOrder;
         private int controlIndex;
         // Stores map.
         public Map Map { get; private set; }
         // ID of the player who is currently in control.
-        public NetworkInstanceId Control {
-            get {
+        public NetworkInstanceId Control
+        {
+            get
+            {
                 return _turnOrder[controlIndex];
             }
         }
@@ -62,6 +71,9 @@ namespace HeroesArena
                 return;
             }
 
+            // synchronize the random state
+            Random.InitState(param.randomSeed);
+
             // Forms cells list.
             List<Cell> cells = new List<Cell>();
             foreach (Coordinates pos in param.Targets)
@@ -75,36 +87,48 @@ namespace HeroesArena
             // Executes action.
             _players[Control].ControlledUnit.Actions[param.Tag].Execute(cells, Map);
 
+
             // Notifies GameController that move was made.
             this.PostNotification(DidExecuteActionNotification);
         }
         #endregion
 
         // Changes turn.
-        public void ChangeTurn()
+        public void ChangeTurn(bool increment = true)
         {
-            IncrementTurnIndex();
+            if(increment)
+                IncrementTurnIndex();
+            else
+                FixTurnOrder();
+
             _players[Control].ControlledUnit.TurnStart();
 
             // Notifies GameController that turn was changed.
             this.PostNotification(DidChangeControlNotification);
         }
 
-        private void IncrementTurnIndex() {
+        private void IncrementTurnIndex()
+        {
             controlIndex++;
+            FixTurnOrder();
+        }
+
+        private void FixTurnOrder()
+        {
             if (controlIndex >= _turnOrder.Count)
                 controlIndex = 0;
         }
 
         // Resets and starts the game.
-        public void Reset(List<PlayerController> players)
+        public void Reset(List<PlayerController> players = null)
         {
             Winner = NetworkInstanceId.Invalid;
-            SetPlayers(players);
+            if(players != null)
+                SetPlayers(players);
             SetTurnOrder();
 
             // Notifies GameController that map is needed.
-            var args = new int[] {players.Count, MapSize, MapSize, NumWalls, NumPotions};
+            var args = new int[] { _players.Count, MapSize, MapSize, NumWalls, NumObjects };
             this.PostNotification(RequestMap, args);
         }
 
@@ -121,15 +145,12 @@ namespace HeroesArena
         // Assigns units for players.
         public void AssignUnits()
         {
-            // TODO names are not supposed to be here.
-            string[] names = { "Arngrim", "Bjorn", "Einherjar", "Guomundr", "Hrothgar", "Ingvar", "Jonark", "Kjarr", "Niohad", "Orvar", "Palnatoke", "Ragnar", "Sigmund", "Volsung", "Weohstan", "Yrsa" };
 
             List<NetworkInstanceId> players = _players.Keys.ToList();
             List<BasicUnit> units = Map.GetUnits();
             for (int i = 0; i < players.Count; ++i)
             {
                 _players[players[i]].AssignUnit(units[i]);
-                _players[players[i]].Name = names[Random.Range(0, names.Length)];
             }
         }
 
@@ -139,7 +160,6 @@ namespace HeroesArena
             _players.Clear();
             foreach (PlayerController player in players)
                 _players[player.netId] = player;
-            playersAlive = _players.Count;
         }
 
         // Clears old turn order and sets new.
@@ -157,20 +177,42 @@ namespace HeroesArena
         }
 
         // Sets a player as killed removing him from the player queue.
-        public void KillPlayer(NetworkInstanceId playerId)
+        public void KillPlayer(object sender, object args)
         {
-            playersAlive--;
-            _turnOrder.Remove(playerId);
+            // finds player by the killed unit
+            NetworkInstanceId deadPlayer;
+            foreach (var netId in _players.Keys)
+            {
+                if (_players[netId].ControlledUnit == sender)
+                {
+                    deadPlayer = netId;
+                    bool toChangeTurn = false;
+                    toChangeTurn = Control == deadPlayer;
+                    _turnOrder.Remove(deadPlayer);
+                    
+                    if (IsGameOver)
+                    {
+                        Winner = _turnOrder[0];
+                        this.PostNotification(DidEndGameNotification);
+                    }
 
-           // Notifies GameController that a player has been removed.
-            this.PostNotification(DidKillPlayer);
+                    if (toChangeTurn)
+                        ChangeTurn(false);
+
+                    break;
+                }
+
+                // else exception??? I mean what are we gonna do if the killed player hadn't existed in the first place..... creepy..
+            }
         }
 
-        // Checks if game is ended.
-        public bool GameIsEnded()
+        // Checks if game over.
+        public bool IsGameOver
         {
-            // TODO
-            return false;
+            get
+            {
+                return playersAlive == 1;
+            }
         }
 
         // Constructor.

@@ -53,4 +53,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GameView: {fileID: 0}
   MatchController: {fileID: 0}
-  PlayerController: {fileID: 0}
+  DebugMode: 0

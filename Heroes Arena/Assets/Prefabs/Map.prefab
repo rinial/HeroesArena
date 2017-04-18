@@ -308,6 +308,7 @@ MonoBehaviour:
   ActionHighlights: {fileID: 1432382676435910}
   SelectedAreaHighlights: {fileID: 1308622776792908}
   MouseHighlight: {fileID: 1495558400188652}
+  BottomPanel: {fileID: 0}
   LocalPlayerLabel: {fileID: 0}
   GameStateLabel: {fileID: 0}
   HealthBar: {fileID: 0}
@@ -315,6 +316,10 @@ MonoBehaviour:
   EndTurnButton: {fileID: 0}
   AttackButton: {fileID: 0}
   MoveButton: {fileID: 0}
+  HideGridButton: {fileID: 0}
+  SkillButton: {fileID: 0}
+  EndGamePanel: {fileID: 0}
+  EndGameLabel: {fileID: 0}
   GridTile: {fileID: 1303863270749348, guid: 8b9ebcd2b11ef4e4bae57d178a77fdc8, type: 2}
   Ground: {fileID: 1671943403675918, guid: 64f46d4097faa244780d8f95cc16beae, type: 2}
   Ground1: {fileID: 1684283420385202, guid: 83457fc184ba89a4085953ad9c966e78, type: 2}
@@ -328,6 +333,8 @@ MonoBehaviour:
   Wizard: {fileID: 1152372137925744, guid: 330ed24bff5ad444b9a81afffaaf25e9, type: 2}
   HealthPotion: {fileID: 1846822313129444, guid: 1629a93dfffc246428debab0987da6ac,
     type: 2}
+  Spikes: {fileID: 1705385771294198, guid: eef484a05c7dcf641aeea9f3214de00b, type: 2}
+  Corpse: {fileID: 1471207446755980, guid: bf2dc8aff8ae3d3458793607df1dbb14, type: 2}
   ActionHighlight: {fileID: 1230625223618896, guid: 9ad3c473f74a5894ba20c49b14c60b5e,
     type: 2}
 --- !u!212 &212595596103806352

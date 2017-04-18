@@ -20,7 +20,7 @@ namespace HeroesArena
             Cell = cell;
             Type = type;
 
-            // TODO this shouldnt be here. Also magic number.
+            // TODO this shouldnt be here. Also magic numbers.
             switch (type)
             {
                 case ObjectType.HealthPotion:
@@ -28,16 +28,30 @@ namespace HeroesArena
                     {
                         if (unit != null)
                         {
-                            unit.Heal(10);
+                            unit.Heal(5);
                             Cell.OnCellEnter -= OnObjectUse;
                             Cell.Object = null;
                         }
                     };
                     break;
+                case ObjectType.Spikes:
+                    OnObjectUse = unit =>
+                    {
+                        if (unit != null)
+                        {
+                            unit.TakeDamage(null, new Damage(3));
+                        }
+                    };
+                    break;
+                case ObjectType.Corpse:
+                    OnObjectUse = unit => { };
+                    break;
             }
 
-            if(cell != null)
+            if (cell != null)
+            {
                 cell.Object = this;
+            }
         }
 
         // For cloning.
@@ -64,7 +78,7 @@ namespace HeroesArena
             }
 
             // We don't check if Cell.Equals(ob.Cell) to avoid recusrion.
-            return true;
+            return Type == ob.Type;
         }
 
         // For performance.
@@ -76,14 +90,14 @@ namespace HeroesArena
             }
 
             // We don't check if Cell.Equals(ob.Cell) to avoid recusrion.
-            return true;
+            return Type == ob.Type;
         }
 
         // For Equals.
         public override int GetHashCode()
         {
             // We don't add Cell.GetHashCode() to avoid recursion.
-            return 0;
+            return Type.GetHashCode();
         }
         #endregion
     }

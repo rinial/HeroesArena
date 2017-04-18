@@ -13,7 +13,7 @@ namespace HeroesArena
         public const int ObjectsMargin = 3;
 
         // Returns a newly generated map based on given width and height
-        public static MapParameters Generate(int unitNum, int width, int height, int minWallNum, int maxWallNum, int minPotionNum, int maxPotionNum)
+        public static MapParameters Generate(int unitNum, int width, int height, int minWallNum, int maxWallNum, int minObjectNum, int maxObjectNum)
         {
             List<Cell> cells = new List<Cell>();
 
@@ -38,7 +38,7 @@ namespace HeroesArena
             }
             
             // set random health potions
-            objectCount = Random.Range(minPotionNum, maxPotionNum + 1);
+            objectCount = Random.Range(minObjectNum, maxObjectNum + 1);
             while (objectCount > 0)
             {
                 var pos = GetRandomPosition(width, height, 1);
@@ -87,7 +87,7 @@ namespace HeroesArena
         {
             var objects = (ObjectType[])Enum.GetValues(typeof(ObjectType));
             ObjectType obj = objects[Random.Range(0, objects.Length)];
-            return obj != ObjectType.None ? obj : GetRandomObject();
+            return obj != ObjectType.None && obj != ObjectType.Corpse ? obj : GetRandomObject();
         }
 
         // returns a random class tag
@@ -106,9 +106,9 @@ namespace HeroesArena
         }
 
         // Returns a newly generated squared map based on given size
-        public static MapParameters Generate(int unitNum, int size, int numWalls, int numPotions)
+        public static MapParameters Generate(int unitNum, int size, int numWalls, int numObjects)
         {
-            return Generate(unitNum, size, size, numWalls, numWalls, numPotions, numPotions);
+            return Generate(unitNum, size, size, numWalls, numWalls, numObjects, numObjects);
         }
     }
 }

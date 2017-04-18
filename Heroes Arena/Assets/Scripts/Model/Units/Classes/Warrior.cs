@@ -14,6 +14,7 @@ namespace HeroesArena
         private int _basicAttackCost = 5;
         private Damage _basicAttackDamage = new Damage(5);
         private int _basicAttackMaxRange = 1;
+        private int _basicWallBreakCost = 8;
 
         // Constructor.
         public Warrior(BasicUnit unit) : base(unit)
@@ -22,11 +23,15 @@ namespace HeroesArena
             HealthPoints = _healthPoints;
             ActionPoints = _actionPoints;
 
+            // basic actions
             AddAction(new AttackAction(Unit, _basicAttackCost, _basicAttackDamage, _basicAttackMaxRange));
 
             MoveAction basicMove = new MoveAction(Unit, _basicMoveCost);
             AddAction(basicMove);
             AddAction(new LongMoveAction(basicMove));
+
+            // class specific actions
+            AddAction(new WallBreakAction(Unit, _basicWallBreakCost, _basicAttackMaxRange));
         }
     }
 }

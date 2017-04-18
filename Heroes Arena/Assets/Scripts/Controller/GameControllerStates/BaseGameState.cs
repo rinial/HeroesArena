@@ -26,6 +26,16 @@ namespace HeroesArena
         public Button MoveButton { get { return GameView.MoveButton; } }
         // Button for attack mode.
         public Button AttackButton { get { return GameView.AttackButton; } }
+        // Button for hiding grid.
+        public Button HideGridButton { get { return GameView.HideGridButton; } }
+        // Button for using skills.
+        public Button SkillButton { get { return GameView.SkillButton; } }
+        // Label with end game message.
+        public Text EndGameLabel { get { return GameView.EndGameLabel; } }
+
+        public GameObject EndGamePanel { get { return GameView.EndGamePanel; } }
+
+        public GameObject BottomPanel { get { return GameView.BottomPanel; } }
 
         // Sets owner.
         protected virtual void Awake()

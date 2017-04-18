@@ -1,4 +1,6 @@
-﻿namespace HeroesArena
+﻿using UnityEngine;
+
+namespace HeroesArena
 {
     // Represents parameters for one action.
     public class ActionParameters
@@ -7,6 +9,8 @@
         public ActionTag Tag;
         // Targets of action.
         public Coordinates[] Targets;
+        // Seed, generated on the server. For random syncing purposes.
+        public int randomSeed;
 
         #region Constructors
         // Constructors. UNetWeaver needs basic constructor.
@@ -24,6 +28,7 @@
         {
             Tag = tag;
             Targets = new [] { target };
+            this.randomSeed = System.Guid.NewGuid().GetHashCode();
         }
         #endregion
     }

@@ -12,6 +12,8 @@ namespace HeroesArena
         private int _basicAttackCost = 3;
         private Damage _basicAttackDamage = new Damage(3);
         private int _basicAttackMaxRange = 3;
+        private int _basicSpikesTrapCost = 8;
+        private int _basicSpikesTrapMaxRange = 2;
 
         // Constructor.
         public Rogue(BasicUnit unit) : base(unit)
@@ -20,11 +22,15 @@ namespace HeroesArena
             HealthPoints = _healthPoints;
             ActionPoints = _actionPoints;
 
+            // basic actions
             AddAction(new AttackAction(Unit, _basicAttackCost, _basicAttackDamage, _basicAttackMaxRange));
 
             MoveAction basicMove = new MoveAction(Unit, _basicMoveCost);
             AddAction(basicMove);
             AddAction(new LongMoveAction(basicMove));
+
+            // class specific actions
+            AddAction(new SpikesTrapAction(Unit, _basicSpikesTrapCost, _basicSpikesTrapMaxRange));
         }
     }
 }

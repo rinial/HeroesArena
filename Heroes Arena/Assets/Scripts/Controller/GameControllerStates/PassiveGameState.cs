@@ -12,7 +12,6 @@ namespace HeroesArena
 
             // Updates UI elements.
             GameStateLabel.text = "State: Opponent's Turn.";
-            RefreshPlayerLabels();
         }
 
         public override void OnUpdate()

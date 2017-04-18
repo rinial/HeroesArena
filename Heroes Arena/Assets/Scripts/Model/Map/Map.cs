@@ -126,6 +126,15 @@ namespace HeroesArena
 
             return visibleCells;
         }
+
+        // Returns a list with only a given center cell.
+        public List<Cell> GetSelfCell(Cell center)
+        {
+            List<Cell> cells = new List<Cell>();
+            cells.Add(center);
+            return cells;
+        }
+
         // Returns true if target can be seen.
         public bool CanBeSeen(Coordinates from, Coordinates target, int maxRange = int.MaxValue)
         {
@@ -293,9 +302,11 @@ namespace HeroesArena
             {
                 Cell cell = new Cell(mapParam.Positions[i], mapParam.Tiles[i]);
                 ObjectParameters objectParams = mapParam.Objects[i];
-                cell.Object = objectParams.Type == ObjectType.None ? null : new BasicObject(cell, objectParams.Type);
+                if (objectParams.Type != ObjectType.None)
+                    new BasicObject(cell, objectParams.Type);
                 UnitParameters unitParams = mapParam.Units[i];
-                cell.Unit = unitParams.Class == ClassTag.None ? null : new BasicUnit(cell, unitParams.Facing, unitParams.Class);
+                if (unitParams.Class != ClassTag.None)
+                    new BasicUnit(cell, unitParams.Facing, unitParams.Class);
                 Cells[mapParam.Positions[i]] = cell;
             }
         }

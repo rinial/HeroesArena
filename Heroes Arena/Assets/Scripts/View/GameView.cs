@@ -2,6 +2,8 @@
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace HeroesArena
@@ -29,6 +31,7 @@ namespace HeroesArena
         public GameObject ActionHighlights;
         public GameObject SelectedAreaHighlights;
         public GameObject MouseHighlight;
+        public GameObject BottomPanel;
         public Text LocalPlayerLabel;
         public Text GameStateLabel;
         public GameObject HealthBar;
@@ -36,6 +39,10 @@ namespace HeroesArena
         public Button EndTurnButton;
         public Button AttackButton;
         public Button MoveButton;
+        public Button HideGridButton;
+        public Button SkillButton;
+        public GameObject EndGamePanel;
+        public Text EndGameLabel;
         #endregion
 
         #region Prefabs
@@ -66,13 +73,15 @@ namespace HeroesArena
         [SerializeField]
         private GameObject HealthPotion;
         [SerializeField]
+        private GameObject Spikes;
+        [SerializeField]
         private GameObject ActionHighlight;
         #endregion
 
         // Stores gameobject references and provides easy position-gameobjects access.
-        private Dictionary<Coordinates, List<GameObject>> _shownCells;
+        private Dictionary<Coordinates, List<GameObject>> _shownCells = new Dictionary<Coordinates, List<GameObject>>();
         // Stores gameobject references and provides easy position-gameobjects access for cells in FOW.
-        private Dictionary<Coordinates, List<GameObject>> _shownFOWCells;
+        private Dictionary<Coordinates, List<GameObject>> _shownFOWCells = new Dictionary<Coordinates, List<GameObject>>();
         // Stores old map
         private Map _oldMap;
         // Checks if grid should be shown.
@@ -81,18 +90,29 @@ namespace HeroesArena
         private bool _showActionHighlights = false;
         // Action that would be used upon click.
         private ActionTag _clickAction = ActionTag.LongMove;
-
-        // Initialization.
-        private void OnEnable()
-        {
-            _shownCells = new Dictionary<Coordinates, List<GameObject>>();
-            _shownFOWCells = new Dictionary<Coordinates, List<GameObject>>();
-        }
+        // Coordinates of the mouse from last time.
+        private Coordinates _lastMousePos;
+        // Used to enable units sprites after updating animation.
+        private List<SpriteRenderer> _spritesToEnable = new List<SpriteRenderer>();
+        private List<GameObject> _unitsToDelete = new List<GameObject>();
 
         // Executed at every frame.
         private void Update()
         {
-
+            for (int i = _spritesToEnable.Count - 1; i >=0; --i)
+            {
+                SpriteRenderer spriteRenderer = _spritesToEnable[i];
+                if (spriteRenderer != null)
+                    spriteRenderer.enabled = true;
+                _spritesToEnable.Remove(spriteRenderer);
+            }
+            for (int i = _unitsToDelete.Count - 1; i >= 0; --i)
+            {
+                GameObject unit = _unitsToDelete[i];
+                _unitsToDelete.Remove(unit);
+                if(unit != null)
+                    Destroy(unit);
+            }
         }
 
         #region Show/Clear Map
@@ -102,12 +122,10 @@ namespace HeroesArena
             // New list to be stored in shownCells later.
             List<GameObject> gameObjects = new List<GameObject>();
 
-            // TODO tile should depend on cell.Tile
             // Shows tile of the cell.
             GameObject tile = ShowOnGrid(GetTilePrefab(cell.Tile.Type), Tiles, cell);
             gameObjects.Add(tile);
 
-            // TODO unit should depend on cell.Unit
             // Shows unit on the cell.
             if (cell.Unit != null)
             {
@@ -133,13 +151,14 @@ namespace HeroesArena
 
                     CameraController.Target = unit.transform;
                 }
+
+                _spritesToEnable.Add(unit.GetComponent<SpriteRenderer>());
             }
 
-            // TODO object should depend on cell.Object
             // Shows object on the cell.
             if (cell.Object != null)
             {
-                GameObject obj = ShowOnGrid(HealthPotion, Objects, cell);
+                GameObject obj = ShowOnGrid(GetObjectPrefab(cell.Object.Type), Objects, cell);
                 gameObjects.Add(obj);
             }
 
@@ -177,6 +196,28 @@ namespace HeroesArena
                 ShowActionHighlights();
         }
 
+        // Change the color and text of the skill button depending on the class of the controlled unit.
+        public void SetSkillButton()
+        {
+            var color = SkillButton.GetComponent<Image>();
+            var label = SkillButton.GetComponentsInChildren<Text>()[0];
+
+            switch (MatchController.LocalPlayer.ControlledUnit.Class.Tag) {
+                case ClassTag.Rogue:
+                    color.color = Color.yellow;
+                    label.text = "Spikes Trap";
+                    break;
+                case ClassTag.Wizard:
+                    color.color = Color.blue;
+                    label.text = "Teleport";
+                    break;
+                case ClassTag.Warrior:
+                    color.color = Color.red;
+                    label.text = "Wall Break";
+                    break;
+            }
+        }
+
         // Clears everything that is not supposed to be shown.
         public void ClearMismatch(Map map)
         {
@@ -197,7 +238,12 @@ namespace HeroesArena
                 foreach (Coordinates pos in keysToDelete)
                 {
                     foreach (GameObject obj in _shownCells[pos])
-                        Destroy(obj);
+                    {
+                        if (obj.CompareTag("Unit"))
+                            _unitsToDelete.Add(obj);
+                        else
+                            Destroy(obj);
+                    }
                     _shownCells.Remove(pos);
                 }
                 foreach (Coordinates pos in keysToTurnFOW)
@@ -229,16 +275,43 @@ namespace HeroesArena
         }
         #endregion
 
+        #region Show Mouse Highlight
         public void ShowMouseHighlight(Coordinates target)
         {
-            if (_shownCells.ContainsKey(target))
+            if(_lastMousePos != null)
+                SetAlphaForSpritesBelow(_lastMousePos, 1);
+            SetAlphaForSpritesBelow(target, 0.7f);
+
+            if (_shownCells.ContainsKey(target) || _shownFOWCells.ContainsKey(target))
             {
                 MouseHighlight.SetActive(true);
                 SetOnGrid(MouseHighlight, target);
             }
             else
                 MouseHighlight.SetActive(false);
+
+            _lastMousePos = target;
         }
+        private void SetAlphaForSpritesBelow(Coordinates target, float alpha)
+        {
+            Coordinates posBelow = new Coordinates(target.X, target.Y - 1);
+            if (_shownCells.ContainsKey(posBelow))
+                SetAlphaForSprites(_shownCells[posBelow], alpha);
+            else if (_shownFOWCells.ContainsKey(posBelow))
+                SetAlphaForSprites(_shownFOWCells[posBelow], alpha);
+        }
+        private void SetAlphaForSprites(List<GameObject> objects, float alpha)
+        {
+            foreach (GameObject obj in objects)
+            {
+                if (obj != null && obj.GetComponent<SpriteRenderer>().sortingLayerName != "Ground")
+                {
+                    Color color = obj.GetComponent<SpriteRenderer>().color;
+                    obj.GetComponent<SpriteRenderer>().color = new Color(color.r, color.g, color.b, alpha);
+                }
+            }
+        }
+        #endregion
 
         #region Show/Clear Grid
         // Shows one grid cell.
@@ -278,7 +351,6 @@ namespace HeroesArena
         // Clears and then shows selected area highlights.
         public void ShowSelectedAreaHighlights(Coordinates target)
         {
-            MouseHighlight.SetActive(true);
             ClearSelectedAreaHighlights();
             Action action = MatchController.LocalPlayer.ControlledUnit.Actions[_clickAction];
             foreach (Cell cell in action.SelectedArea(target, _oldMap))
@@ -341,10 +413,15 @@ namespace HeroesArena
         public void OnEndTurnClick()
         {
             // Sets chosen click action back to move.
-            OnMoveClick();
 
             // Notifies GameController.ActiveGameState that EndTurn button was clicked.
             this.PostNotification(EndTurnClickedNotification);
+        }
+
+        public void OnExitClick()
+        {
+            Destroy(FindObjectOfType<NetworkManager>().gameObject);
+            SceneManager.LoadSceneAsync("StartScene");
         }
 
         // Called when Move button is clicked.
@@ -356,6 +433,7 @@ namespace HeroesArena
             // Sets button not interactable anymore.
             MoveButton.interactable = false;
             AttackButton.interactable = true;
+            SkillButton.interactable = true;
 
             ShowActionHighlights();
         }
@@ -369,6 +447,32 @@ namespace HeroesArena
             // Sets button not interactable anymore.
             AttackButton.interactable = false;
             MoveButton.interactable = true;
+            SkillButton.interactable = true;
+
+            ShowActionHighlights();
+        }
+
+        // Called when Skill button is clicked.
+        public void OnSkillClick()
+        {
+            //  TODO more generic approach.
+            switch (MatchController.LocalPlayer.ControlledUnit.Class.Tag) {
+                case ClassTag.Rogue:
+                    _clickAction = ActionTag.SpikesTrap;
+                    break;
+                case ClassTag.Wizard:
+                    _clickAction = ActionTag.Teleport;
+                    break;
+                case ClassTag.Warrior:
+                    _clickAction = ActionTag.WallBreak;
+                    break;
+            }
+
+            // Sets button not interactable anymore.
+            SkillButton.interactable = false;
+            AttackButton.interactable = true;
+            MoveButton.interactable = true;
+
             ShowActionHighlights();
         }
         #endregion
@@ -494,6 +598,20 @@ namespace HeroesArena
                     return Warrior;
                 default:
                     return Rogue;
+            }
+        }
+
+        // Returns a corresponding unit prefab.
+        public GameObject GetObjectPrefab(ObjectType obj)
+        {
+            switch (obj)
+            {
+                case ObjectType.HealthPotion:
+                    return HealthPotion;
+                case ObjectType.Spikes:
+                    return Spikes;
+                default:
+                    return Spikes;
             }
         }
 

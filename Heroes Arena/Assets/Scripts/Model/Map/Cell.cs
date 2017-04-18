@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 namespace HeroesArena
 {
@@ -21,7 +22,7 @@ namespace HeroesArena
             set
             {
                 _object = value;
-                if(value != null)
+                if (value != null)
                     OnCellEnter += value.OnObjectUse;
             }
         }
@@ -36,7 +37,8 @@ namespace HeroesArena
             set
             {
                 _unit = value;
-                OnCellEnter(value);
+                if(_unit != null)
+                    OnCellEnter(value);
             }
         }
 

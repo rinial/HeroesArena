@@ -6,7 +6,7 @@ namespace HeroesArena
     // Represents one of GameController states, when local player is in control.
     public class ActiveGameState : BaseGameState
     {
-        // Executed when entering this state. 
+        // Executed when entering this state.
         public override void Enter()
         {
             base.Enter();
@@ -16,7 +16,7 @@ namespace HeroesArena
             EndTurnButton.interactable = true;
             MoveButton.interactable = true;
             AttackButton.interactable = true;
-            RefreshPlayerLabels();
+            // SkillButton.interactable = true;
             // Sets chosen click action to move. Shows action highlight.
             GameView.OnMoveClick();
         }
@@ -37,11 +37,16 @@ namespace HeroesArena
         {
             base.Exit();
 
+            GameView.OnMoveClick();
+
+            GameView.HideActionHighlights();
+            GameView.ClearSelectedAreaHighlights();
+
             // Updates UI elements.
             EndTurnButton.interactable = false;
             MoveButton.interactable = false;
             AttackButton.interactable = false;
-            GameView.HideActionHighlights();
+            // SkillButton.interactable = false;
         }
 
         // During active phase observes CellClicked and EndTurn notifications.

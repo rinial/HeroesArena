@@ -24,7 +24,7 @@ namespace HeroesArena
         {
             if (map == null || map.Cells == null || Executer == null)
                 return new List<Cell>();
-            
+
             BasicUnit unit = Executer as BasicUnit;
 
             List<Cell> cellsInRange = new List<Cell>();
@@ -56,7 +56,7 @@ namespace HeroesArena
             // If no executer or cell to move to.
             if (Executer == null || cell == null)
                 return false;
-            
+
             BasicUnit unit = Executer as BasicUnit;
 
             // If cell is not in range.
@@ -76,7 +76,7 @@ namespace HeroesArena
             unit.Cell.Unit = null;
             unit.Cell = cell;
             cell.Unit = unit;
-            
+
             return true;
         }
 

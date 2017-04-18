@@ -51,7 +51,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40537cab993496240acce41a13c63411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NumberOfPlayers: 2
+  NumberOfPlayers: 4
   NetworkManagerHud: {fileID: 0}
   LocalPlayer: {fileID: 0}
   Players: []

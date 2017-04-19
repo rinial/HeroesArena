@@ -35,6 +35,10 @@ namespace HeroesArena
             this.AddObserver(OnPlayerStarted, PlayerController.Started);
             this.AddObserver(OnPlayerStartedLocal, PlayerController.StartedLocal);
             this.AddObserver(OnPlayerDestroyed, PlayerController.Destroyed);
+
+            NetworkManagerHud.showGUI = true;
+
+            // NetworkManager.singleton.connectionConfig.NetworkDropThreshold = 90;
         }
 
         // Stops observing when disabled.

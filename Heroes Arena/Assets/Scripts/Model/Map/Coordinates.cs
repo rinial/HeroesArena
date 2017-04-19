@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace HeroesArena
 {
@@ -50,6 +51,27 @@ namespace HeroesArena
                  : dY >= dX && dY >= -dX ? Direction.Up
                  : dX > dY ? Direction.Right
                  : Direction.Left;
+        }
+
+        // Returns a vector of the length 1 to the given direction.
+        public static Vector2 GetVectorByDirection(Direction dir)
+        {
+            var v = new Vector2();
+            switch (dir) {
+                case Direction.Up:
+                    v.Set(0, 1);
+                    break;
+                case Direction.Down:
+                    v.Set(0, -1);
+                    break;
+                case Direction.Left:
+                    v.Set(-1, 0);
+                    break;
+                case Direction.Right:
+                    v.Set(1, 0);
+                    break;
+            }
+            return v;
         }
         #endregion
 

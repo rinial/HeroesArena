@@ -120,12 +120,12 @@ namespace HeroesArena
         }
 
         // Resets and starts the game.
-        public void Reset(List<PlayerController> players = null)
+        public void Reset(List<PlayerController> players = null, int firstPlayer = 0)
         {
             Winner = NetworkInstanceId.Invalid;
             if(players != null)
                 SetPlayers(players);
-            SetTurnOrder();
+            SetTurnOrder(firstPlayer);
 
             // Notifies GameController that map is needed.
             var args = new int[] { _players.Count, MapSize, MapSize, NumWalls, NumObjects };
@@ -136,7 +136,7 @@ namespace HeroesArena
         public void ContinueReset(Map map)
         {
             Map = map;
-            AssignUnits();
+            // AssignUnits();
 
             // Notifies GameController that game is begun.
             this.PostNotification(DidBeginGameNotification);
@@ -163,17 +163,16 @@ namespace HeroesArena
         }
 
         // Clears old turn order and sets new.
-        private void SetTurnOrder()
+        private void SetTurnOrder(int firstPlayer)
         {
             // TODO add some dependency on initiative.
-
             _turnOrder.Clear();
             foreach (NetworkInstanceId id in _players.Keys)
             {
                 _turnOrder.Add(id);
             }
-            // TODO order should depend on initiatives
-            controlIndex = 0;
+
+            controlIndex = firstPlayer;
         }
 
         // Sets a player as killed removing him from the player queue.
@@ -189,7 +188,7 @@ namespace HeroesArena
                     bool toChangeTurn = false;
                     toChangeTurn = Control == deadPlayer;
                     _turnOrder.Remove(deadPlayer);
-                    
+
                     if (IsGameOver)
                     {
                         Winner = _turnOrder[0];

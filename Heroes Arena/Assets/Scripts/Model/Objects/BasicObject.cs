@@ -39,7 +39,7 @@ namespace HeroesArena
                     {
                         if (unit != null)
                         {
-                            unit.TakeDamage(null, new Damage(3));
+                            unit.TakeDamage(null, new Damage(4));
                         }
                     };
                     break;

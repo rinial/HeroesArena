@@ -12,12 +12,12 @@ namespace HeroesArena
         public Dictionary<Coordinates, Cell> Cells { get; private set; }
 
         // Returns a random unoccupied cell of the map.
-        public Cell GetRandomUnoccupiedCell()
+        public Cell GetRandomUnoccupiedCell(bool onUnwalkable = false, bool onUnits = false, bool onObjects = false)
         {
             Cell cell;
 
             do cell = Cells.ElementAt(Random.Range(0, Cells.Count)).Value;
-            while (cell.IsOccupied);
+            while (cell.IsOccupied(onUnwalkable, onUnits, onObjects));
 
             return cell;
         }
@@ -111,22 +111,6 @@ namespace HeroesArena
             return new Route(reverseRoute);
         }
 
-        #region Visibility methods
-        // Gets all cells visible from center.
-        public List<Cell> GetVisibleCells(Cell center, int maxRange = int.MaxValue)
-        {
-            if (!Cells.ContainsKey(center.Position) || Cells[center.Position] != center)
-                return null;
-
-            List<Cell> visibleCells = new List<Cell>();
-
-            foreach (Cell cell in Cells.Values)
-                if (!visibleCells.Contains(cell))
-                    SeenInLine(center.Position, cell.Position, ref visibleCells, maxRange);
-
-            return visibleCells;
-        }
-
         // Returns a list with only a given center cell.
         public List<Cell> GetSelfCell(Cell center)
         {
@@ -135,17 +119,33 @@ namespace HeroesArena
             return cells;
         }
 
+        #region Visibility methods
+        // Gets all cells visible from center.
+        public List<Cell> GetVisibleCells(Cell center, int maxRange = int.MaxValue, bool seeThroughUnits = true)
+        {
+            if (!Cells.ContainsKey(center.Position) || Cells[center.Position] != center)
+                return null;
+
+            List<Cell> visibleCells = new List<Cell>();
+
+            foreach (Cell cell in Cells.Values)
+                if (!visibleCells.Contains(cell))
+                    SeenInLine(center.Position, cell.Position, ref visibleCells, maxRange, seeThroughUnits);
+
+            return visibleCells;
+        }
+
         // Returns true if target can be seen.
-        public bool CanBeSeen(Coordinates from, Coordinates target, int maxRange = int.MaxValue)
+        public bool CanBeSeen(Coordinates from, Coordinates target, int maxRange = int.MaxValue, bool seeThroughUnits = true)
         {
             if (!Cells.ContainsKey(from) || !Cells.ContainsKey(target))
                 return false;
 
-            List<Cell> visibleCells = GetVisibleCells(Cells[from], maxRange);
+            List<Cell> visibleCells = GetVisibleCells(Cells[from], maxRange, seeThroughUnits);
 
             return visibleCells.Contains(Cells[target]);
         }
-        private void SeenInLine(Coordinates from, Coordinates target, ref List<Cell> visibleCells, int maxRange = int.MaxValue)
+        private void SeenInLine(Coordinates from, Coordinates target, ref List<Cell> visibleCells, int maxRange = int.MaxValue, bool seeThroughUnits = true)
         {
             if (!Cells.ContainsKey(from) || !Cells.ContainsKey(target))
                 return;
@@ -158,9 +158,9 @@ namespace HeroesArena
             double endX = target.X;
             double endY = target.Y;
 
-            SeenInLine(startX, startY, endX, endY, ref visibleCells, maxRange);
+            SeenInLine(startX, startY, endX, endY, ref visibleCells, maxRange, seeThroughUnits, from);
         }
-        private void SeenInLine(double startX, double startY, double endX, double endY, ref List<Cell> visibleCells, int maxRange = int.MaxValue)
+        private void SeenInLine(double startX, double startY, double endX, double endY, ref List<Cell> visibleCells, int maxRange = int.MaxValue, bool seeThroughUnits = true, Coordinates center = null)
         {
             double dX = endX - startX;
             double dY = endY - startY;
@@ -187,47 +187,49 @@ namespace HeroesArena
             {
                 if (OnGrid(newY))
                 {
-                    if (!CheckPos((int)(newX + 0.5), (int)(newY + 0.5), ref visibleCells, maxRange))
+                    if (!CheckPos((int)(newX + 0.5), (int)(newY + 0.5), ref visibleCells, maxRange, seeThroughUnits, center))
                         end += (dX > 0 && dY > 0) ? 2 : 1;
 
-                    if (!CheckPos((int)(newX + 0.5), (int)(newY - 0.5), ref visibleCells, maxRange))
+                    if (!CheckPos((int)(newX + 0.5), (int)(newY - 0.5), ref visibleCells, maxRange, seeThroughUnits, center))
                         end += (dX > 0 && dY < 0) ? 2 : 1;
 
-                    if (!CheckPos((int)(newX - 0.5), (int)(newY + 0.5), ref visibleCells, maxRange))
+                    if (!CheckPos((int)(newX - 0.5), (int)(newY + 0.5), ref visibleCells, maxRange, seeThroughUnits, center))
                         end += (dX < 0 && dY > 0) ? 2 : 1;
 
-                    if (!CheckPos((int)(newX - 0.5), (int)(newY - 0.5), ref visibleCells, maxRange))
+                    if (!CheckPos((int)(newX - 0.5), (int)(newY - 0.5), ref visibleCells, maxRange, seeThroughUnits, center))
                         end += (dX < 0 && dY < 0) ? 2 : 1;
                 }
                 else
                 {
-                    if (!CheckPos((int)(newX + 0.5), (int)Math.Floor(newY + 0.5), ref visibleCells, maxRange))
+                    if (!CheckPos((int)(newX + 0.5), (int)Math.Floor(newY + 0.5), ref visibleCells, maxRange, seeThroughUnits, center))
                         end = 2;
 
-                    if (!CheckPos((int)(newX - 0.5), (int)Math.Floor(newY + 0.5), ref visibleCells, maxRange))
+                    if (!CheckPos((int)(newX - 0.5), (int)Math.Floor(newY + 0.5), ref visibleCells, maxRange, seeThroughUnits, center))
                         end = 2;
                 }
             }
             else if (OnGrid(newY))
             {
-                if (!CheckPos((int)Math.Floor(newX + 0.5), (int)(newY + 0.5), ref visibleCells, maxRange))
+                if (!CheckPos((int)Math.Floor(newX + 0.5), (int)(newY + 0.5), ref visibleCells, maxRange, seeThroughUnits, center))
                     end = 2;
 
-                if (!CheckPos((int)Math.Floor(newX + 0.5), (int)(newY - 0.5), ref visibleCells, maxRange))
+                if (!CheckPos((int)Math.Floor(newX + 0.5), (int)(newY - 0.5), ref visibleCells, maxRange, seeThroughUnits, center))
                     end = 2;
             }
 
             if (end > 0)
                 return;
 
-            SeenInLine(newX, newY, endX, endY, ref visibleCells, maxRange);
+            SeenInLine(newX, newY, endX, endY, ref visibleCells, maxRange, seeThroughUnits);
         }
-        private bool CheckPos(int posX, int posY, ref List<Cell> visibleCells, int maxRange)
+        private bool CheckPos(int posX, int posY, ref List<Cell> visibleCells, int maxRange, bool seeThroughUnits = true, Coordinates center = null)
         {
             Coordinates pos = new Coordinates(posX, posY);
+            if (center != null && pos.Equals(center))
+                return true;
             if (!Cells.ContainsKey(pos))
                 return true;
-            if (!Cells[pos].Tile.Walkable)
+            if (Cells[pos].IsOccupied(false, seeThroughUnits, true))
             {
                 if (!visibleCells.Contains(Cells[pos]) && visibleCells[0].Distance(Cells[pos]) <= maxRange)
                     visibleCells.Add(Cells[pos]);

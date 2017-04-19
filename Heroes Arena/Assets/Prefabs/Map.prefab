@@ -319,6 +319,7 @@ MonoBehaviour:
   HideGridButton: {fileID: 0}
   SkillButton: {fileID: 0}
   EndGamePanel: {fileID: 0}
+  ClassSelectionPanel: {fileID: 0}
   EndGameLabel: {fileID: 0}
   GridTile: {fileID: 1303863270749348, guid: 8b9ebcd2b11ef4e4bae57d178a77fdc8, type: 2}
   Ground: {fileID: 1671943403675918, guid: 64f46d4097faa244780d8f95cc16beae, type: 2}

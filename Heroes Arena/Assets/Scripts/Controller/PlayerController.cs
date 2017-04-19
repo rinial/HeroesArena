@@ -13,7 +13,9 @@ namespace HeroesArena
         public const string Destroyed = "PlayerController.Destroyed";
         public const string Initiative = "PlayerController.Initiative";
         public const string SetName = "PlayerController.SetName";
+        public const string SetClass = "PlayerController.SetClass";
         public const string Restart = "PlayerController.Restart";
+        public const string Disconnect = "PlayerController.Disconnect";
         public const string RequestEndTurn = "PlayerController.RequestEndTurn";
         public const string RequestExecuteAction = "PlayerController.RequestExecuteAction";
         public const string RequestMap = "PlayerController.RequestMap";
@@ -57,17 +59,17 @@ namespace HeroesArena
 
         // Runs only on host determining initiative.
         [Command]
-        public void CmdInitiative()
+        public void CmdInitiative(int firstPlayer)
         {
             // TODO this is called initiative, but is only called for one player and no initiative is determined, should be changed.
-            RpcInitiative();
+            RpcInitiative(firstPlayer);
         }
         // Notifies every client about initiative.
         [ClientRpc]
-        private void RpcInitiative()
+        private void RpcInitiative(int firstPlayer)
         {
             // Notifies GameController that initiative is determined.
-            this.PostNotification(Initiative);
+            this.PostNotification(Initiative, firstPlayer);
         }
 
         [Command]
@@ -85,6 +87,21 @@ namespace HeroesArena
             this.PostNotification(SetName, args);
         }
 
+        [Command]
+        public void CmdSetClass(NetworkInstanceId id, UnitParameters param)
+        {
+            RpcSetClass(id, param);
+        }
+
+        [ClientRpc]
+        private void RpcSetClass(NetworkInstanceId id, UnitParameters param)
+        {
+            object[] args = new object[2];
+            args[0] = id;
+            args[1] = param;
+            this.PostNotification(SetClass, args);
+        }
+
         // Runs only on host determining initiative.
         [Command]
         public void CmdRestart()
@@ -97,6 +114,17 @@ namespace HeroesArena
         {
             // Notifies GameController that restart is started.
             this.PostNotification(Restart);
+        }
+
+        [Command]
+        public void CmdDisconnect()
+        {
+            RpcDisconnect();
+        }
+        [ClientRpc]
+        private void RpcDisconnect()
+        {
+            this.PostNotification(Disconnect);
         }
 
         // Runs only on host executing action.

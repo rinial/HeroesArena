@@ -6,8 +6,8 @@ namespace HeroesArena
     public class Rogue : Class
     {
         // Some class parameters.
-        private Parameter<int> _healthPoints = new Parameter<int>(10);
-        private Parameter<int> _actionPoints = new Parameter<int>(100);
+        private Parameter<int> _healthPoints = new Parameter<int>(18);
+        private Parameter<int> _actionPoints = new Parameter<int>(11);
         private int _basicMoveCost = 2;
         private int _basicAttackCost = 3;
         private Damage _basicAttackDamage = new Damage(3);

@@ -71,6 +71,12 @@ namespace HeroesArena
         }
         #endregion
 
+        // Returns true is the cell is occupied, false otherwise.
+        public bool IsOccupied(bool onUnwalkable = false, bool onUnits = false, bool onObjects = false)
+        {
+            return !((onUnwalkable || Tile.Walkable) && (onObjects || Object == null) && (onUnits || Unit == null));
+        }
+
         #region Constructors
         // Constructors.
         public Cell(BasicTile tile, BasicUnit unit = null, BasicObject obj = null)
@@ -98,12 +104,6 @@ namespace HeroesArena
                 cell.Object.Cell = cell;
 
             return cell;
-        }
-
-        // Returns true is the cell is occupied, false otherwise.
-        public bool IsOccupied
-        {
-            get { return !(Tile.Walkable && Object == null && Unit == null); }
         }
 
         #region Equals

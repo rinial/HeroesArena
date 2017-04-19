@@ -31,7 +31,6 @@ namespace HeroesArena
         // Skill execution.
         public override bool Execute(List<Cell> targets, Map map)
         {
-            Debug.Log(targets.Count + " ");
             // If no target.
             if (targets == null)
                 return false;
@@ -41,7 +40,6 @@ namespace HeroesArena
                 return false;
 
             Cell cell = targets[0];
-            Debug.Log(cell);
 
             // If no executer or cell to teleport.
             if (Executer == null || cell == null)
@@ -63,7 +61,7 @@ namespace HeroesArena
                 return false;
 
             // finds random unoccupied cell to teleport the wizard to
-            var targetCell = map.GetRandomUnoccupiedCell();
+            var targetCell = map.GetRandomUnoccupiedCell(false, false, true);
 
             unit.UpdateFacing(cell);
 

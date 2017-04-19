@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace HeroesArena
 {
@@ -16,6 +19,8 @@ namespace HeroesArena
         // For testing matters.
         public bool DebugMode = true;
 
+        public bool Starting = true;
+
         // Observes some notifications from MatchController, GameModel and PlayerController.
         private void OnEnable()
         {
@@ -26,12 +31,15 @@ namespace HeroesArena
             this.AddObserver(OnDidEndGame, GameModel.DidEndGameNotification);
             this.AddObserver(OnInitiative, PlayerController.Initiative);
             this.AddObserver(OnSetName, PlayerController.SetName);
+            this.AddObserver(OnSetClass, PlayerController.SetClass);
             this.AddObserver(OnRestart, PlayerController.Restart);
+            this.AddObserver(OnDisconnect, PlayerController.Disconnect);
             this.AddObserver(OnRequestExecuteAction, PlayerController.RequestExecuteAction);
             this.AddObserver(OnRequestEndTurn, PlayerController.RequestEndTurn);
             this.AddObserver(OnRequestMap, GameModel.RequestMap);
             this.AddObserver(OnMapCreated, PlayerController.MapCreated);
             this.AddObserver(OnPlayerDied, BasicUnit.PlayerDied);
+            this.AddObserver(OnExitClick, GameView.ExitClickedNotification);
         }
 
         // Stops observing when disabled.
@@ -44,11 +52,15 @@ namespace HeroesArena
             this.RemoveObserver(OnDidEndGame, GameModel.DidEndGameNotification);
             this.RemoveObserver(OnInitiative, PlayerController.Initiative);
             this.RemoveObserver(OnSetName, PlayerController.SetName);
+            this.RemoveObserver(OnSetClass, PlayerController.SetClass);
+            this.RemoveObserver(OnRestart, PlayerController.Restart);
+            this.RemoveObserver(OnDisconnect, PlayerController.Disconnect);
             this.RemoveObserver(OnRequestExecuteAction, PlayerController.RequestExecuteAction);
             this.RemoveObserver(OnRequestEndTurn, PlayerController.RequestEndTurn);
             this.RemoveObserver(OnRequestMap, GameModel.RequestMap);
             this.RemoveObserver(OnMapCreated, PlayerController.MapCreated);
             this.RemoveObserver(OnPlayerDied, BasicUnit.PlayerDied);
+            this.RemoveObserver(OnExitClick, GameView.ExitClickedNotification);
         }
 
         // Checks state at start.
@@ -61,22 +73,29 @@ namespace HeroesArena
         private void OnMatchReady(object sender, object args)
         {
             // We wait here for clients to understand that match is ready.
-            // TODO we shoud probably find a way to see when everyone is ready instead of a delay.
             if (MatchController.LocalPlayer.isServer)
-                Invoke("StartGame", 1f);
+                StartCoroutine(StartGame());
+            // Invoke("StartGame", 0.1f);
         }
 
-        // Called only by the host starts the game.
-        private void StartGame()
+        private IEnumerator StartGame()
         {
+            yield return new WaitUntil(() => NetworkManager.singleton.numPlayers == MatchController.NumberOfPlayers);
+
             // TODO this is called initiative, but is only called for one player and no initiative is used, should be changed.
-            MatchController.LocalPlayer.CmdInitiative();
+            // TODO temporarily random
+            int firstPlayer = UnityEngine.Random.Range(0, MatchController.NumberOfPlayers);
+            MatchController.LocalPlayer.CmdInitiative(firstPlayer);
         }
+
+
 
         // Called from PlayerController when initiative is decided.
+        private int firstPlayer;
         private void OnInitiative(object sender, object args)
         {
-            // TODO no initiative used, just starts the game, should be changed.
+            // TODO currently random turn order
+            firstPlayer = (int) args;
             PlayerController player = MatchController.LocalPlayer;
             player.CmdSetName(player.netId, FindObjectOfType<MainMenu>().PlayerName);
         }
@@ -87,13 +106,37 @@ namespace HeroesArena
             int num = MatchController.NumberOfPlayers;
             foreach (PlayerController player in MatchController.Players)
             {
-                if (player.netId == (NetworkInstanceId) param[0])
-                    player.Name = (string) param[1];
+                if (player.netId == (NetworkInstanceId)param[0])
+                    player.Name = (string)param[1];
                 if (player.Name != "")
                     --num;
             }
-            if(num == 0)
-                GameModel.Reset(MatchController.Players);
+            if (num == 0)
+                GameModel.Reset(MatchController.Players, firstPlayer);
+        }
+
+        private void OnSetClass(object sender, object args)
+        {
+            object[] param = args as object[];
+            int num = MatchController.NumberOfPlayers;
+            UnitParameters unitParam = (UnitParameters) param[1];
+            Random.InitState(unitParam.RandomSeed);
+            foreach (PlayerController player in MatchController.Players)
+            {
+                if (player.netId == (NetworkInstanceId)param[0])
+                    player.AssignUnit(new BasicUnit(GameModel.Map.GetRandomUnoccupiedCell(), MapGenerator.GetRandomDirection(), unitParam.Class));
+                if (player.ControlledUnit != null)
+                    --num;
+            }
+            if (num == 0)
+            {
+                Starting = false;
+
+                GameView.Clear();
+                ShowMap();
+                GameView.Init();
+                CheckState();
+            }
         }
 
         // Called from GameModel when new map is needed.
@@ -118,7 +161,47 @@ namespace HeroesArena
         public void OnRestart(object sender, object args)
         {
             GameModel.Reset(MatchController.Players);
+
+            foreach (PlayerController player in MatchController.Players)
+                player.AssignUnit(null);
+
+            Starting = true;
+
+            CheckState();
         }
+
+        private void OnExitClick(object sender, object args)
+        {
+            if(MatchController.LocalPlayer != null)
+                MatchController.LocalPlayer.CmdDisconnect();
+            else
+            {
+                Destroy(FindObjectOfType<NetworkManager>().gameObject);
+                SceneManager.LoadSceneAsync("StartScene");
+            }
+        }
+        private void OnDisconnect(object sender, object args)
+        {
+            if (MatchController.LocalPlayer != null && MatchController.LocalPlayer.isServer)
+            {
+                StartCoroutine(Disconnect());
+            }
+            else
+            {
+                NetworkManager.singleton.StopClient();
+                Destroy(FindObjectOfType<NetworkManager>().gameObject);
+                SceneManager.LoadSceneAsync("StartScene");
+            }
+        }
+        private IEnumerator Disconnect()
+        {
+            yield return new WaitUntil(() => NetworkManager.singleton.numPlayers == 1);
+
+            NetworkManager.singleton.StopHost();
+            Destroy(FindObjectOfType<NetworkManager>().gameObject);
+            SceneManager.LoadSceneAsync("StartScene");
+        }
+
 
         // Called from PlayerController when action execution is requested.
         private void OnRequestExecuteAction(object sender, object args)
@@ -130,7 +213,7 @@ namespace HeroesArena
         // Called from GameModel when action is executed.
         private void OnDidExecuteAction(object sender, object args)
         {
-            GameView.Show(new Map(GameModel.Map.GetVisibleCells(MatchController.LocalPlayer.ControlledUnit.Cell)));
+            ShowMap();
         }
 
         // Called from PlayerController when turn end is requested.
@@ -143,9 +226,11 @@ namespace HeroesArena
         // Called from GameModel when game starts.
         private void OnDidBeginGame(object sender, object args)
         {
+            /*
             GameView.Clear();
-            GameView.Show(new Map(GameModel.Map.GetVisibleCells(MatchController.LocalPlayer.ControlledUnit.Cell)));
-            GameView.SetSkillButton();
+            ShowMap();
+            GameView.Init();
+            */
 
             // Checks state.
             CheckState();
@@ -154,7 +239,7 @@ namespace HeroesArena
         // Called from GameModel when controlling player is changed.
         private void OnDidChangeControl(object sender, object args)
         {
-            GameView.Show(new Map(GameModel.Map.GetVisibleCells(MatchController.LocalPlayer.ControlledUnit.Cell)));
+            ShowMap();
 
             // Checks state.
             CheckState();
@@ -170,9 +255,14 @@ namespace HeroesArena
         private void OnDidEndGame(object sender, object args)
         {
             GameView.Show(GameModel.Map);
-            GameView.Show(new Map(GameModel.Map.GetVisibleCells(MatchController.LocalPlayer.ControlledUnit.Cell)));
+            ShowMap();
             // Checks state.
             CheckState();
+        }
+
+        private void ShowMap()
+        {
+            GameView.Show(new Map(GameModel.Map.GetVisibleCells(MatchController.LocalPlayer.ControlledUnit.Cell)));
         }
 
         // Checks and changes state of GameController.
@@ -180,6 +270,8 @@ namespace HeroesArena
         {
             if (!MatchController.IsReady)
                 ChangeState<LoadGameState>();
+            else if(Starting)
+                ChangeState<PreGameState>();
             else if (GameModel.IsGameOver && !DebugMode)
                 ChangeState<EndGameState>();
             else if (GameModel.Control == MatchController.LocalPlayer.netId)

@@ -23,13 +23,6 @@
         public override void Exit()
         {
             base.Exit();
-
-            // Updates UI elements.
-            EndTurnButton.gameObject.SetActive(true);
-            MoveButton.gameObject.SetActive(true);
-            AttackButton.gameObject.SetActive(true);
-            HideGridButton.gameObject.SetActive(true);
-            BottomPanel.SetActive(true);
         }
     }
 }

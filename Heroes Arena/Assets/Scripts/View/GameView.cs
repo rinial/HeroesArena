@@ -14,6 +14,8 @@ namespace HeroesArena
         // Notifications.
         public const string CellClickedNotification = "GameView.CellClickedNotification";
         public const string EndTurnClickedNotification = "GameView.EndTurnClickedNotification";
+        public const string ExitClickedNotification = "GameView.ExitClickedNotification";
+        public const string SelectedClassNotification = "GameView.SelectedClassNotification";
 
         // Sizes of tiles.
         public const int CellXPixelSize = 20, CellYPixelSize = 15;
@@ -42,6 +44,7 @@ namespace HeroesArena
         public Button HideGridButton;
         public Button SkillButton;
         public GameObject EndGamePanel;
+        public GameObject ClassSelectionPanel;
         public Text EndGameLabel;
         #endregion
 
@@ -75,6 +78,8 @@ namespace HeroesArena
         [SerializeField]
         private GameObject Spikes;
         [SerializeField]
+        private GameObject Corpse;
+        [SerializeField]
         private GameObject ActionHighlight;
         #endregion
 
@@ -90,6 +95,7 @@ namespace HeroesArena
         private bool _showActionHighlights = false;
         // Action that would be used upon click.
         private ActionTag _clickAction = ActionTag.LongMove;
+        private ClassTag _selectedClass = ClassTag.None;
         // Coordinates of the mouse from last time.
         private Coordinates _lastMousePos;
         // Used to enable units sprites after updating animation.
@@ -112,6 +118,38 @@ namespace HeroesArena
                 _unitsToDelete.Remove(unit);
                 if(unit != null)
                     Destroy(unit);
+            }
+        }
+
+        // Initialize player settings at the start of the match.
+        public void Init()
+        {
+            SetSkillButton();
+        }
+        // Changes the color and text of the skill button depending on the class of the controlled unit.
+        private void SetSkillButton()
+        {
+            var color = SkillButton.GetComponent<Image>();
+            var label = SkillButton.GetComponentsInChildren<Text>()[0];
+
+            Color c;
+            switch (MatchController.LocalPlayer.ControlledUnit.Class.Tag)
+            {
+                case ClassTag.Rogue:
+                    ColorUtility.TryParseHtmlString("#FFE13AC8", out c);
+                    color.color = c;
+                    label.text = "Spikes";
+                    break;
+                case ClassTag.Wizard:
+                    ColorUtility.TryParseHtmlString("#2FCBFFC8", out c);
+                    color.color = c;
+                    label.text = "Teleport";
+                    break;
+                case ClassTag.Warrior:
+                    ColorUtility.TryParseHtmlString("#FF3636C8", out c);
+                    color.color = c;
+                    label.text = "Hook";
+                    break;
             }
         }
 
@@ -142,6 +180,11 @@ namespace HeroesArena
                 // Fill action bar.
                 Parameter<int> actionPoints = cell.Unit.ActionPoints;
                 FillBar(unit.transform.Find("ActionBar"), actionPoints);
+
+                // find the owner of this unit
+                PlayerController owner = MatchController.Players.Find(x => x.ControlledUnit == cell.Unit);
+                var nameLabel = unit.transform.Find("NameLabel").GetComponent<Text>();
+                nameLabel.text = owner.Name;
 
                 // Sets camera to follow unit if it is controlled by local player. Also fills bars on UI.
                 if (cell.Unit == MatchController.LocalPlayer.ControlledUnit)
@@ -194,28 +237,6 @@ namespace HeroesArena
             _oldMap = (Map)map.Clone();
             if (_showActionHighlights)
                 ShowActionHighlights();
-        }
-
-        // Change the color and text of the skill button depending on the class of the controlled unit.
-        public void SetSkillButton()
-        {
-            var color = SkillButton.GetComponent<Image>();
-            var label = SkillButton.GetComponentsInChildren<Text>()[0];
-
-            switch (MatchController.LocalPlayer.ControlledUnit.Class.Tag) {
-                case ClassTag.Rogue:
-                    color.color = Color.yellow;
-                    label.text = "Spikes Trap";
-                    break;
-                case ClassTag.Wizard:
-                    color.color = Color.blue;
-                    label.text = "Teleport";
-                    break;
-                case ClassTag.Warrior:
-                    color.color = Color.red;
-                    label.text = "Wall Break";
-                    break;
-            }
         }
 
         // Clears everything that is not supposed to be shown.
@@ -352,10 +373,13 @@ namespace HeroesArena
         public void ShowSelectedAreaHighlights(Coordinates target)
         {
             ClearSelectedAreaHighlights();
-            Action action = MatchController.LocalPlayer.ControlledUnit.Actions[_clickAction];
-            foreach (Cell cell in action.SelectedArea(target, _oldMap))
+            if (MatchController.LocalPlayer != null)
             {
-                ShowSelectedAreaHighlightCell(cell.Position);
+                Action action = MatchController.LocalPlayer.ControlledUnit.Actions[_clickAction];
+                foreach (Cell cell in action.SelectedArea(target, _oldMap))
+                {
+                    ShowSelectedAreaHighlightCell(cell.Position);
+                }
             }
         }
         // Clears selected area highlights.
@@ -420,8 +444,33 @@ namespace HeroesArena
 
         public void OnExitClick()
         {
-            Destroy(FindObjectOfType<NetworkManager>().gameObject);
-            SceneManager.LoadSceneAsync("StartScene");
+            this.PostNotification(ExitClickedNotification);
+        }
+
+        public void SetSelectionColors(float rogue, float warrior, float wizard)
+        {
+            ClassSelectionPanel.transform.Find("Rogue").Find("RogueImage").GetComponent<Image>().color = new Color(1, 1, 1, rogue);
+            ClassSelectionPanel.transform.Find("Warrior").Find("WarriorImage").GetComponent<Image>().color = new Color(1, 1, 1, warrior);
+            ClassSelectionPanel.transform.Find("Wizard").Find("WizardImage").GetComponent<Image>().color = new Color(1, 1, 1, wizard);
+        }
+        public void OnRogueClick()
+        {
+            SetSelectionColors(1, 0.7f, 0.7f);
+            _selectedClass = ClassTag.Rogue;
+        }
+        public void OnWarriorClick()
+        {
+            SetSelectionColors(0.7f, 1, 0.7f);
+            _selectedClass = ClassTag.Warrior;
+        }
+        public void OnWizardClick()
+        {
+            SetSelectionColors(0.7f, 0.7f, 1);
+            _selectedClass = ClassTag.Wizard;
+        }
+        public void OnConfirmClick()
+        {
+            this.PostNotification(SelectedClassNotification, _selectedClass);
         }
 
         // Called when Move button is clicked.
@@ -610,6 +659,8 @@ namespace HeroesArena
                     return HealthPotion;
                 case ObjectType.Spikes:
                     return Spikes;
+                case ObjectType.Corpse:
+                    return Corpse;
                 default:
                     return Spikes;
             }

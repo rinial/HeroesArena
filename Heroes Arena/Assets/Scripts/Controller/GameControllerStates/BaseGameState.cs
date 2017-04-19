@@ -37,6 +37,8 @@ namespace HeroesArena
 
         public GameObject BottomPanel { get { return GameView.BottomPanel; } }
 
+        public GameObject ClassSelectionPanel { get { return GameView.ClassSelectionPanel; } }
+
         // Sets owner.
         protected virtual void Awake()
         {

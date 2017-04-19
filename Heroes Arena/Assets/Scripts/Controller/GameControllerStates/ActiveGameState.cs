@@ -16,7 +16,7 @@ namespace HeroesArena
             EndTurnButton.interactable = true;
             MoveButton.interactable = true;
             AttackButton.interactable = true;
-            // SkillButton.interactable = true;
+            SkillButton.interactable = true;
             // Sets chosen click action to move. Shows action highlight.
             GameView.OnMoveClick();
         }
@@ -46,7 +46,7 @@ namespace HeroesArena
             EndTurnButton.interactable = false;
             MoveButton.interactable = false;
             AttackButton.interactable = false;
-            // SkillButton.interactable = false;
+            SkillButton.interactable = false;
         }
 
         // During active phase observes CellClicked and EndTurn notifications.

@@ -44,13 +44,14 @@ namespace HeroesArena
                 var pos = GetRandomPosition(width, height, 1);
                 ObjectType obj = GetRandomObject();
                 Cell cell = cells[(int)(pos.y * width + pos.x)];
-                if (!cell.IsOccupied)
+                if (!cell.IsOccupied())
                 {
                     new BasicObject(cell, obj);
                     --objectCount;
                 }
             }
 
+            /*
             // set random units
             while (unitNum > 0)
             {
@@ -58,12 +59,13 @@ namespace HeroesArena
                 ClassTag clas = GetRandomClass();
                 Direction facing = GetRandomDirection();
                 Cell cell = cells[(int)(pos.y * width + pos.x)];
-                if (!cell.IsOccupied)
+                if (!cell.IsOccupied())
                 {
                     new BasicUnit(cell, facing, clas);
                     --unitNum;
                 }
             }
+            */
 
             return new MapParameters(cells);
         }
@@ -99,7 +101,7 @@ namespace HeroesArena
         }
 
         // returns a random class tag
-        private static Direction GetRandomDirection()
+        public static Direction GetRandomDirection()
         {
             var directions = (Direction[])Enum.GetValues(typeof(Direction));
             return directions[Random.Range(0, directions.Length)];

@@ -6,11 +6,11 @@ namespace HeroesArena
     public class Wizard : Class
     {
         // Some class parameters.
-        private Parameter<int> _healthPoints = new Parameter<int>(7);
-        private Parameter<int> _actionPoints = new Parameter<int>(100);
+        private Parameter<int> _healthPoints = new Parameter<int>(12);
+        private Parameter<int> _actionPoints = new Parameter<int>(12);
         private int _basicMoveCost = 4;
-        private int _basicAttackCost = 4;
-        private Damage _basicAttackDamage = new Damage(4);
+        private int _basicAttackCost = 3;
+        private Damage _basicAttackDamage = new Damage(2);
         private int _basicAttackMaxRange = 5;
         private int _basicTeleportCost = 8;
 

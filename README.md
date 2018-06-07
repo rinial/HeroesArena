@@ -1,4 +1,4 @@
-# heroes-arena
+# Heroes Arena
 
 **Heroes Arena** is a turn-based arena multiplayer RPG game. Connect to your friends, choose your class and defeat them all!
 
@@ -6,7 +6,7 @@ Made with Unity and ♥.
 
 ## Building
 
-1.  `git clone https://github.com/Ziririn/heroes-arena.git`
+1.  `git clone https://github.com/Ziririn/HeroesArena.git`
 2.  Open the project in the Unity editor.
 3.  Choose **File - Build and Run** and select the desired build folder.
 

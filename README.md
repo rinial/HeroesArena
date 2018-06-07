@@ -42,7 +42,7 @@ Currently, there are 3 classes available. Each one has its own unique ability:
 - **Warrior** ⚔
   - **Rampage**: attack everything on a line.
 - **Rogue** 🗡
-  - **Deathly trap**: sets an invisible trap.
+  - **Deadly trap**: sets an invisible trap.
 
 ## Screenshots
 

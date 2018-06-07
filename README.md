@@ -27,7 +27,7 @@ Heroes Arena is a multiplayer game, so you'd better find someone to play with.
 
 Everything is controlled by a mouse 🖱️.
 
-- Each turn you have a certain number of move and action points💎, which you can spend on movement, attacking other characters or activating your special abilities.
+- Each turn you have a certain number of move and action points 💎, which you can spend on movement, attacking other characters or activating your special abilities.
 - The map is randomly generated, including the terrain and items, such as potions.
 - Don't forget to use the terrain and spend your points mindfully!
 
@@ -54,6 +54,6 @@ The game was written as a university project in 2017. It isn't currently updated
 
 ## License
 
-Copyright 2017 © Fazli Jan, Oleg Ivanov.
+Copyright 2017 (C) Fazli Jan, Oleg Ivanov.
 
 Licensed under the MIT License.

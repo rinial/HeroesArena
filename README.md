@@ -48,7 +48,7 @@ Currently, there are 3 classes available. Each one has its own unique ability:
 
 <img src="Screenshots/MainMenu.png" alt="Main menu" width="750"/>
 <img src="Screenshots/HeroSelection.png" alt="Hero selection" width="750"/>
-<img src="Screenshots/Gameplay.png" alt="Gameplay" width="750"/>
+<img src="Screenshots/Gameplay1.png" alt="Gameplay" width="750"/>
 
 ## Disclaimer
 

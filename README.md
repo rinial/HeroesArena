@@ -4,6 +4,11 @@
 
 Made with Unity and ♥.
 
+## Where to play
+
+You can download an archive with an executable of the game for Windows from Google Drive: [64-bit](https://drive.google.com/open?id=1A9Z-sUB1PtmaCUZAGCLpA-6f-d1vCJSN), [32-bit](https://drive.google.com/open?id=1h22pMBFzMKB4U1pNl6t1tU-aLfG8wG3M).  
+Or you can build the game on your own PC, following the instructions below.
+
 ## Building
 
 1.  `git clone https://github.com/Ziririn/HeroesArena.git`

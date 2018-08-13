@@ -31,7 +31,7 @@ Everything is controlled by a mouse 🖱️.
 - The map is randomly generated, including the terrain and items, such as potions.
 - Don't forget to use the terrain and spend your points mindfully!
 
-**The goal:** defeat other players and become the Champion .
+**The goal:** defeat other players and become the Champion.
 
 ## Classes
 

@@ -54,6 +54,6 @@ The game was written as a university project in 2017. It isn't currently updated
 
 ## License
 
-Copyright 2017 (C) Fazli Jan, Oleg Ivanov.
+Copyright 2017 (C) Jan Fazli, Oleg Ivanov.
 
 Licensed under the MIT License.

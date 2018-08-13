@@ -1,6 +1,6 @@
 # Heroes Arena
 
-**Heroes Arena** is a turn-based arena multiplayer RPG game. Connect to your friends, choose your class and defeat them all!
+**Heroes Arena** is a turn-based arena multiplayer RPG. Connect to your friends, choose your class and defeat them all!
 
 Made with Unity and ♥.
 
